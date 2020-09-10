@@ -1,0 +1,9 @@
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.cache
+.vs
+_*
+ipch
+!*.tests.vcxproj.user
