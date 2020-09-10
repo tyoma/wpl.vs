@@ -12,6 +12,7 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\wpl\vs\com.h" />
+    <ClInclude Include="..\wpl\vs\factory.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -29,6 +30,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="frame.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="factory.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

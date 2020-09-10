@@ -21,16 +21,13 @@
 #include <wpl/win32/font_loader.h>
 
 #include <wpl/vs/vspackage.h>
+#include <wpl/vs/factory.h>
 
 #include "async.h"
-#include "frame.h"
-#include "pane.h"
 
 #include <functional>
 #include <logger/log.h>
 #include <stdexcept>
-#include <wpl/factory.h>
-#include <wpl/win32/form.h>
 
 #define PREAMBLE "Generic VS Package: "
 
@@ -71,13 +68,6 @@ namespace wpl
 					return _variant_t();
 				});
 			}
-
-			HWND get_frame_hwnd(IVsUIShell *shell)
-			{
-				HWND hparent = HWND_DESKTOP;
-
-				return shell ? shell->GetDialogOwnerHwnd(&hparent), hparent : hparent;
-			}
 		}
 
 		CComPtr<_DTE> package::get_dte() const
@@ -93,33 +83,8 @@ namespace wpl
 		CComPtr<IVsUIShell> package::get_shell() const
 		{	return _shell;	}
 
-		const factory &package::get_control_factory() const
+		const factory &package::get_factory() const
 		{	return *_factory;	}
-
-		shared_ptr<form> package::create_pane()
-		{
-			// {BED6EA71-BEE3-4E71-AFED-CFFBA521CF46}
-			const GUID c_settingsSlot = { 0xbed6ea71, 0xbee3, 0x4e71, { 0xaf, 0xed, 0xcf, 0xfb, 0xa5, 0x21, 0xcf, 0x46 } };
-
-			CComObject<pane> *pane_object;
-			CComObject<pane>::CreateInstance(&pane_object);
-			CComPtr<IVsWindowPane> sp(pane_object);
-			CComPtr<IVsWindowFrame> frame_;
-
-			pane_object->backbuffer = _backbuffer;
-			pane_object->renderer = _renderer;
-			pane_object->text_engine = _text_engine;
-			pane_object->stylesheet_ = _stylesheet;
-			LOG(PREAMBLE "creating VS pane window...") % A(pane_object) % A(_next_tool_id);
-			if (S_OK == _shell->CreateToolWindow(CTW_fMultiInstance | CTW_fToolbarHost, _next_tool_id++, sp, GUID_NULL, c_settingsSlot,
-				GUID_NULL, NULL, L"", NULL, &frame_) && frame_)
-			{
-				LOG(PREAMBLE "frame created.") % A(frame_);
-				return make_shared<frame>(frame_, *pane_object);
-			}
-			LOGE(PREAMBLE "failed to create frame!");
-			return shared_ptr<form>();
-		}
 
 		STDMETHODIMP package::Initialize(IAsyncServiceProvider *sp, IProfferAsyncService *, IAsyncProgressCallback *, IVsTask **ppTask)
 		try
@@ -173,10 +138,6 @@ namespace wpl
 			terminate();
 			LOG(PREAMBLE "... Releasing wpl supporting objects...");
 			_factory.reset();
-			_stylesheet.reset();
-			_text_engine.reset();
-			_renderer.reset();
-			_backbuffer.reset();
 			LOG(PREAMBLE "... Releasing VS objects.");
 			_service_provider.Release();
 			_dte.Release();
@@ -207,18 +168,9 @@ namespace wpl
 
 			shared_ptr<text_engine_composite> tec(new text_engine_composite);
 
-			_backbuffer.reset(new gcontext::surface_type(1, 1, 16));
-			_renderer.reset(new gcontext::renderer_type(2));
-			_text_engine = shared_ptr<gcontext::text_engine_type>(tec, &tec->text_engine);
-			// _stylesheet = ...;
-			_factory = factory::create_default(_backbuffer, _renderer, _text_engine, _stylesheet);
-			_factory->register_form([this] (const shared_ptr<gcontext::surface_type> &backbuffer,
-				const shared_ptr<gcontext::renderer_type> &renderer,
-				const shared_ptr<gcontext::text_engine_type> &text_engine,
-				const shared_ptr<stylesheet> &/*stylesheet_*/) {
-
-				return shared_ptr<form>(new win32::form(backbuffer, renderer, text_engine, get_frame_hwnd(_shell)));
-			});
+			_factory = make_shared<factory>(*_shell, make_shared<gcontext::surface_type>(1, 1, 16),
+				make_shared<gcontext::renderer_type>(2), shared_ptr<gcontext::text_engine_type>(tec, &tec->text_engine),
+				nullptr);
 
 			LOG(PREAMBLE "entering derived class initialization...");
 

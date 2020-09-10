@@ -6,6 +6,7 @@ add_definitions(-D_ATL_FREE_THREADED)
 
 set(WPL_VS_SOURCES
 	async.cpp
+	factory.cpp
 	frame.cpp
 	pane.cpp
 	vspackage.cpp

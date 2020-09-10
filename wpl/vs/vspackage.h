@@ -29,12 +29,13 @@
 
 namespace wpl
 {
-	class factory;
 	struct form;
 	struct stylesheet;
 
 	namespace vs
 	{
+		class factory;
+
 		extern const GUID c_guidGlobalCmdSet;
 
 		class package : public freethreaded< CComObjectRootEx<CComMultiThreadModel> >,
@@ -51,12 +52,11 @@ namespace wpl
 		protected:
 			CComPtr<_DTE> get_dte() const;
 			CComPtr<IVsUIShell> get_shell() const;
-			const factory &get_control_factory() const;
-			std::shared_ptr<form> create_pane();
+			const factory &get_factory() const;
 
 		private:
 			virtual void initialize(factory &factory_) = 0;
-			virtual void terminate() = 0;
+			virtual void terminate() throw() = 0;
 
 		private:
 			STDMETHODIMP Initialize(IAsyncServiceProvider *sp, IProfferAsyncService *, IAsyncProgressCallback *, IVsTask **ppTask);
@@ -76,14 +76,7 @@ namespace wpl
 			CComPtr<IServiceProvider> _service_provider;
 			mutable CComPtr<_DTE> _dte;
 			CComPtr<IVsUIShell> _shell;
-
-			std::shared_ptr<gcontext::surface_type> _backbuffer;
-			std::shared_ptr<gcontext::renderer_type> _renderer;
-			std::shared_ptr<gcontext::text_engine_type> _text_engine;
-			std::shared_ptr<stylesheet> _stylesheet;
 			std::shared_ptr<factory> _factory;
-
-			unsigned _next_tool_id;
 		};
 	}
 }

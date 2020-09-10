@@ -34,7 +34,7 @@
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-    	<AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <ProjectReference>
@@ -43,6 +43,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\wpl\vs\com.h" />
+    <ClInclude Include="..\wpl\vs\factory.h" />
     <ClInclude Include="..\wpl\vs\vspackage.h" />
     <ClInclude Include="async.h" />
     <ClInclude Include="frame.h" />
@@ -50,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="async.cpp" />
+    <ClCompile Include="factory.cpp" />
     <ClCompile Include="frame.cpp" />
     <ClCompile Include="vspackage.cpp" />
     <ClCompile Include="pane.cpp" />
