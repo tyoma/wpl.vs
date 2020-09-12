@@ -43,7 +43,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\wpl\vs\com.h" />
+    <ClInclude Include="..\wpl\vs\command-target.h" />
+    <ClInclude Include="..\wpl\vs\command.h" />
     <ClInclude Include="..\wpl\vs\factory.h" />
+    <ClInclude Include="..\wpl\vs\ole-command-target.h" />
     <ClInclude Include="..\wpl\vs\vspackage.h" />
     <ClInclude Include="async.h" />
     <ClInclude Include="frame.h" />
@@ -53,6 +56,7 @@
     <ClCompile Include="async.cpp" />
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="frame.cpp" />
+    <ClCompile Include="ole-command-target.cpp" />
     <ClCompile Include="vspackage.cpp" />
     <ClCompile Include="pane.cpp" />
   </ItemGroup>

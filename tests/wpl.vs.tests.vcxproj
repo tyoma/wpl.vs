@@ -43,11 +43,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CommandTargetTests.cpp">
-      <DisableLanguageExtensions>false</DisableLanguageExtensions>
-    </ClCompile>
+    <ClCompile Include="CommandTargetTests.cpp" />
   </ItemGroup>
-  
   <ItemGroup>
     <ProjectReference Include="..\src\wpl.vs.vcxproj">
       <Project>{120FA1C6-37AA-42CE-B922-346BF91EEC0F}</Project>

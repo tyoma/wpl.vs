@@ -1,596 +1,522 @@
-#include <wpl/vs/command-target.h>
+#include <wpl/vs/ole-command-target.h>
 
-#include <guiddef.h>
+#include <vector>
 #include <ut/assert.h>
 #include <ut/test.h>
 
 using namespace std;
 
-namespace micro_profiler
+namespace wpl
 {
-	namespace tests
+	namespace vs
 	{
-		namespace
+		namespace tests
 		{
-			extern const GUID c_guid1 = { 0x12345678, 0x000, 0x000, { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } };
-			extern const GUID c_guid2 = { 0x22345678, 0x000, 0x000, { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } };
-			extern const GUID c_guid3 = { 0x32345678, 0x000, 0x000, { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } };
-
-			template <typename ContextT, const GUID *CommandSetID>
-			class CommandTargetFinal : public CommandTarget<ContextT, CommandSetID>
+			namespace
 			{
-			public:
-				template <typename IteratorT>
-				CommandTargetFinal(IteratorT begin, IteratorT end)
-					: CommandTarget<ContextT, CommandSetID>(begin, end)
-				{	}
+				extern const GUID c_guid1 = { 0x12345678, 0x000, 0x000, { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } };
+				extern const GUID c_guid2 = { 0x22345678, 0x000, 0x000, { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } };
+				extern const GUID c_guid3 = { 0x32345678, 0x000, 0x000, { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } };
 
-			public:
-				ContextT context;
+				class ole_command_target_final : public ole_command_target
+				{
+				public:
+					ole_command_target_final(const GUID &group_id)
+						: ole_command_target(group_id)
+					{	}
 
-			private:
-				STDMETHODIMP QueryInterface(REFIID /*iid*/, void ** /*ppv*/) {	throw 0;	}
-				STDMETHODIMP_(ULONG) AddRef() {	throw 0;	}
-				STDMETHODIMP_(ULONG) Release() {	throw 0;	}
+				private:
+					STDMETHODIMP QueryInterface(REFIID /*iid*/, void ** /*ppv*/) {	throw 0;	}
+					STDMETHODIMP_(ULONG) AddRef() {	throw 0;	}
+					STDMETHODIMP_(ULONG) Release() {	throw 0;	}
+				};
+			}
 
-			private:
-				virtual ContextT get_context()
-				{	return context;	}
-			};
+			begin_test_suite( OleCommandTargetTests )
+				test( CommandTargetRejectsProcessingOfCommandsFromUnknownSets )
+				{
+					// INIT
+					ole_command_target_final ct1(c_guid1);
+					IOleCommandTarget &ict1 = ct1;
+					ole_command_target_final ct2(c_guid2);
+					IOleCommandTarget &ict2 = ct2;
+					OLECMD dummy[1];
 
-			struct mock_command : command<int>
-			{
-				mock_command(int id, unsigned count = 1)
-					: command<int>(id, count > 1 || count == 0), state(0), group_count(count), executed(false)
-				{	}
+					// ACT / ASSERT
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.QueryStatus(NULL, 1, dummy, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.QueryStatus(&c_guid2, 1, dummy, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.QueryStatus(&c_guid3, 1, dummy, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.QueryStatus(NULL, 1, dummy, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.QueryStatus(&c_guid1, 1, dummy, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.QueryStatus(&c_guid3, 1, dummy, NULL));
 
-				virtual bool query_state(const int &, unsigned item, unsigned &flags) const
-				{ return flags = state, item < group_count; }
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.Exec(NULL, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.Exec(&c_guid2, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.Exec(&c_guid3, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.Exec(NULL, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.Exec(&c_guid1, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.Exec(&c_guid3, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+				}
 
-				virtual bool get_name(const int &, unsigned item, wstring &name) const
-				{	return item < names.size() ? name = names[item], true : false;	}
 
-				virtual void exec(int &, unsigned item)
-				{	executed = true, item_index = item;	}
+				test( CommandTargetRejectsProcessingOfUnknownCommands )
+				{
+					// INIT
+					ole_command_target_final ct1(c_guid1);
+					IOleCommandTarget &ict1 = ct1;
+					ole_command_target_final ct2(c_guid2);
+					IOleCommandTarget &ict2 = ct2;
+					OLECMD cmd1 = { 1, };
+					OLECMD cmd2 = { 2, };
 
-				int state;
-				unsigned group_count;
-				bool executed;
-				unsigned item_index;
-				vector<wstring> names;
-			};
+					// ACT / ASSERT
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict1.QueryStatus(&c_guid1, 1, &cmd1, NULL));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict1.QueryStatus(&c_guid1, 1, &cmd2, NULL));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict2.QueryStatus(&c_guid2, 1, &cmd1, NULL));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict2.QueryStatus(&c_guid2, 1, &cmd2, NULL));
 
-			template <typename T>
-			struct mock_command_t : command<T>
-			{
-				mock_command_t(int id_)
-					: command<T>(id_)
-				{	}
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict1.Exec(&c_guid1, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict1.Exec(&c_guid1, 2, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict2.Exec(&c_guid2, 3, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, ict2.Exec(&c_guid2, 4, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+				}
 
-				virtual bool query_state(const T &context_, unsigned /*item*/, unsigned &/*flags*/) const
-				{ return context = context_, true; }
 
-				virtual bool get_name(const T &context_, unsigned /*item*/, wstring &/*name*/) const
-				{	return context = context_, false;	}
+				static int getSingleCommandState(IOleCommandTarget &target, const GUID &command_set, unsigned command)
+				{
+					OLECMD cmd = { command, 0 };
 
-				virtual void exec(T &context_, unsigned /*item*/)
-				{	context = context_;	}
+					assert_equal(S_OK, target.QueryStatus(&command_set, 1, &cmd, NULL));
+					return cmd.cmdf;
+				}
 
-				mutable T context;
-			};
+				test( CommandStateIsResponded )
+				{
+					// INIT
+					unsigned state = 0u;
+					ole_command_target_final oct(c_guid1);
+					command_target &ct = oct;
 
-			struct throwing_command : command<int>
-			{
-				throwing_command()
-					: command<int>(1)
-				{	}
+					ct.add_command(11, [] (unsigned) {}, false, [&] (unsigned, unsigned &state_) {
+						return state_ = state, true;
+					});
 
-				virtual bool query_state(const int &/*context*/, unsigned /*item*/, unsigned &/*flags*/) const
-				{	throw 0;	}
+					// ACT / ASSERT
+					assert_equal(OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE,
+						getSingleCommandState(oct, c_guid1, 11));
 
-				virtual bool get_name(const int &, unsigned /*item*/, wstring &/*name*/) const
-				{	return false;	}
+					// INIT
+					state = command_target::supported;
 
-				virtual void exec(int &, unsigned /*item*/)
-				{	throw 0;	}
-			};
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE,
+						getSingleCommandState(oct, c_guid1, 11));
+
+					// INIT
+					state = command_target::supported | command_target::enabled;
+
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED | OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE,
+						getSingleCommandState(oct, c_guid1, 11));
+
+					// INIT
+					state = command_target::supported | command_target::visible;
+
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED, getSingleCommandState(oct, c_guid1, 11));
+
+					// INIT
+					state = command_target::supported | command_target::visible | command_target::checked;
+
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_LATCHED, getSingleCommandState(oct, c_guid1, 11));
+				}
+
+
+				test( CommandIsSelectedByID )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+
+					oct.add_command(10, [] (unsigned) {}, false, [] (unsigned, unsigned &) {
+						return false;
+					});
+					oct.add_command(19, [] (unsigned) {}, false, [] (unsigned, unsigned &) {
+						return false;
+					});
+					oct.add_command(11, [] (unsigned) {}, false, [] (unsigned, unsigned &state_) {
+						return state_ = command_target::supported | command_target::visible | command_target::enabled, true;
+					});
+					oct.add_command(13, [] (unsigned) {}, false, [] (unsigned, unsigned &state_) {
+						return state_ = command_target::supported | command_target::visible | command_target::checked, true;
+					});
+					oct.add_command(5, [] (unsigned) {}, false, [] (unsigned, unsigned &state_) {
+						return state_ = command_target::supported | command_target::visible, true;
+					});
+
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED, getSingleCommandState(oct, c_guid1, 5));
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE, getSingleCommandState(oct, c_guid1, 10));
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(oct, c_guid1, 11));
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_LATCHED, getSingleCommandState(oct, c_guid1, 13));
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE, getSingleCommandState(oct, c_guid1, 19));
+				}
+
+
+				test( MissingCommandsAreNotSupported )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid2);
+					OLECMD cmd = { 10, 10000 };
+
+					oct.add_command(11, [] (unsigned) {}, false, [] (unsigned, unsigned &) {
+						return true;
+					});
+
+					// ACT / ASSERT
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, oct.QueryStatus(&c_guid2, 1, &cmd, NULL));
+
+					// ASSERT
+					assert_equal(0u, cmd.cmdf);
+
+					// INIT
+					cmd.cmdID = 12;
+					cmd.cmdf = 123;
+
+					// ACT / ASSERT
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, oct.QueryStatus(&c_guid2, 1, &cmd, NULL));
+
+					// ASSERT
+					assert_equal(0u, cmd.cmdf);
+				}
+
+
+				test( GroupCommandIsSelectedByRange )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					OLECMD cmd = { 48, 10000 };
+
+					oct.add_command(10, [] (unsigned) {}, false, [] (unsigned, unsigned &state) {
+						return state = command_target::supported, true;
+					});
+					oct.add_command(31, [] (unsigned) {}, true, [] (unsigned item, unsigned &state) {
+						return item < 17
+							? state = command_target::supported | command_target::enabled | command_target::visible, true
+							: false;
+					});
+					oct.add_command(130, [] (unsigned) {}, true, [] (unsigned item, unsigned &state) {
+						return item < 2 ? state = command_target::supported | command_target::visible, true : false;
+					});
+
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(oct, c_guid1, 31));
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(oct, c_guid1, 35));
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(oct, c_guid1, 47));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, oct.QueryStatus(&c_guid1, 1, &cmd, NULL));
+
+					// ASSERT
+					assert_equal(0u, cmd.cmdf);
+
+					// INIT
+					cmd.cmdID = 132;
+
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED, getSingleCommandState(oct, c_guid1, 130));
+					assert_equal(OLECMDF_SUPPORTED, getSingleCommandState(oct, c_guid1, 131));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, oct.QueryStatus(&c_guid1, 1, &cmd, NULL));
+				}
+
+
+				test( EmptyGroupIsRespondedAsOKButDisabledAndInvisible )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+
+					oct.add_command(10, [] (unsigned) {}, false, [] (unsigned, unsigned &) {
+						return true;
+					});
+					oct.add_command(31, [] (unsigned) {}, true, [] (unsigned, unsigned &state) {
+						return state = command_target::supported | command_target::enabled | command_target::visible, false;
+					});
+					oct.add_command(130, [] (unsigned) {}, true, [] (unsigned item, unsigned &) {
+						return item < 2;
+					});
+
+					// ACT / ASSERT
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_INVISIBLE | OLECMDF_DEFHIDEONCTXTMENU, getSingleCommandState(oct, c_guid1, 31));
+				}
+
+
+				test( SeveralCommandsCanBeProcessed )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					OLECMD cmd[3] = { 0 };
+
+					oct.add_command(10, [] (unsigned) {}, false, [] (unsigned, unsigned &state) {
+						return state = command_target::supported, true;
+					});
+					oct.add_command(31, [] (unsigned) {}, true, [] (unsigned item, unsigned &state) {
+						return item < 17
+							? state = command_target::supported | command_target::enabled | command_target::visible, true
+							: false;
+					});
+					oct.add_command(130, [] (unsigned) {}, true, [] (unsigned item, unsigned &state) {
+						return item < 2 ? state = command_target::supported | command_target::visible, true : false;
+					});
+
+					cmd[0].cmdID = 10;
+					cmd[1].cmdID = 33;
+
+					// ACT / ASSERT
+					assert_equal(S_OK, oct.QueryStatus(&c_guid1, 2, cmd, NULL));
+
+					// ASSERT
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_INVISIBLE | OLECMDF_DEFHIDEONCTXTMENU, (int)cmd[0].cmdf);
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, (int)cmd[1].cmdf);
+
+					// INIT
+					cmd[0].cmdID = 34;
+					cmd[1].cmdID = 10;
+					cmd[2].cmdID = 131;
+
+					// ACT / ASSERT
+					assert_equal(S_OK, oct.QueryStatus(&c_guid1, 3, cmd, NULL));
+
+					// ASSERT
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, (int)cmd[0].cmdf);
+					assert_equal(OLECMDF_SUPPORTED | OLECMDF_INVISIBLE | OLECMDF_DEFHIDEONCTXTMENU, (int)cmd[1].cmdf);
+					assert_equal(OLECMDF_SUPPORTED, (int)cmd[2].cmdf);
+				}
+
+
+				test( ExceptionsFromCommandAreAbsorbed )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					OLECMD cmd = { 1, 0 };
+
+					oct.add_command(1, [] (unsigned) { throw 0; }, true, [] (unsigned, unsigned &) -> bool { throw 0; });
+
+					// ACT / ASSERT
+					assert_equal(E_UNEXPECTED, oct.QueryStatus(&c_guid1, 1, &cmd, NULL));
+					assert_equal(E_UNEXPECTED, oct.Exec(&c_guid1, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+				}
+
+
+				test( CommandIsExecutedBasedOnID )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					vector<int> exec_log;
+
+					oct.add_command(10, [&] (unsigned) { exec_log.push_back(10); });
+					oct.add_command(31, [&] (unsigned) { exec_log.push_back(31); });
+					oct.add_command(130, [&] (unsigned) { exec_log.push_back(130); });
+
+					// ACT
+					assert_equal(S_OK, oct.Exec(&c_guid1, 10, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+
+					// ACT / ASSERT
+					int reference1[] = { 10, };
+
+					assert_equal(reference1, exec_log);
+
+					// ACT
+					assert_equal(S_OK, oct.Exec(&c_guid1, 130, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(S_OK, oct.Exec(&c_guid1, 31, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+
+					// ACT / ASSERT
+					int reference2[] = { 10, 130, 31, };
+
+					assert_equal(reference2, exec_log);
+				}
+
+
+				test( MissingCommandIsReported )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+
+					oct.add_command(33, [&] (unsigned) { assert_is_true(false); });
+
+					// ACT / ASSERT
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, oct.Exec(&c_guid1, 32, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+					assert_equal(OLECMDERR_E_NOTSUPPORTED, oct.Exec(&c_guid1, 34, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
+				}
+
+
+				test( GroupCommandIsSelectedByRangeForExecution )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					vector< pair<int, unsigned> > exec_log;
+
+					oct.add_command(10, [&] (unsigned item) { exec_log.push_back(make_pair(10, item)); });
+					oct.add_command(31, [&] (unsigned item) { exec_log.push_back(make_pair(31, item)); }, true);
+					oct.add_command(130, [&] (unsigned item) { exec_log.push_back(make_pair(130, item)); }, true);
+
+					// ACT / ASSERT
+					oct.Exec(&c_guid1, 31, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+
+					// ASSERT
+					pair<int, unsigned> reference1[] = { make_pair(31, 0u), };
+
+					assert_equal(reference1, exec_log);
+
+					// ACT / ASSERT
+					oct.Exec(&c_guid1, 32, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+
+					// ASSERT
+					pair<int, unsigned> reference2[] = { make_pair(31, 0u), make_pair(31, 1u), };
+
+					assert_equal(reference2, exec_log);
+
+					// ACT / ASSERT
+					oct.Exec(&c_guid1, 47, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+
+					// ASSERT
+					pair<int, unsigned> reference3[] = { make_pair(31, 0u), make_pair(31, 1u), make_pair(31, 16u), };
+
+					assert_equal(reference3, exec_log);
+
+					// ACT / ASSERT
+					oct.Exec(&c_guid1, 131, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+
+					// ASSERT
+					pair<int, unsigned> reference4[] = { make_pair(31, 0u), make_pair(31, 1u), make_pair(31, 16u), make_pair(130, 1u), };
+
+					assert_equal(reference4, exec_log);
+				}
+
+
+				test( GetingTheCaptionFillsTheBufferProvidedWithZeroTermination )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					const size_t buffer_size = 50;
+					wchar_t buffer[sizeof(OLECMDTEXT) + (buffer_size - 1) * sizeof(wchar_t)] = { 0 };
+					OLECMDTEXT *cmdtext = reinterpret_cast<OLECMDTEXT *>(buffer);
+					OLECMD cmd = { };
+
+					cmdtext->cmdtextf = OLECMDTEXTF_NAME;
+					cmdtext->cwBuf = 20;
+
+					oct.add_command(10, [] (unsigned) { }, false, [] (unsigned, unsigned &) { return true; },
+						[] (unsigned, wstring &caption) { return caption = L"a short name", true; });
+					oct.add_command(31, [] (unsigned) { }, true, [] (unsigned, unsigned &) { return true; },
+						[] (unsigned item, wstring &caption) -> bool {
+
+						if (item == 0)
+							caption = L"Lorem ipsum dolor sit amet, consectetur adipiscing elit";
+						else if (item == 1)
+							caption = L"medium-sized strings are good for your health";
+						else
+							caption.clear();
+						return true;
+					});
+
+					// ACT
+					cmd.cmdID = 10;
+					oct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
+
+					// ASSERT
+					assert_equal(L"a short name", wstring(cmdtext->rgwz));
+					assert_equal(wcslen(L"a short name") + 1, cmdtext->cwActual);
+
+					// ACT
+					cmd.cmdID = 31;
+					oct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
+
+					// ASSERT
+					assert_equal(L"Lorem ipsum dolor s", wstring(cmdtext->rgwz));
+					assert_equal(wcslen(L"Lorem ipsum dolor sit amet, consectetur adipiscing elit") + 1, cmdtext->cwActual);
+
+					// ACT
+					cmdtext->cwBuf = 22;
+					oct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
+
+					// ASSERT
+					assert_equal(L"Lorem ipsum dolor sit", wstring(cmdtext->rgwz));
+					assert_equal(wcslen(L"Lorem ipsum dolor sit amet, consectetur adipiscing elit") + 1, cmdtext->cwActual);
+
+					// ACT
+					cmdtext->cwBuf = 46;
+					cmd.cmdID = 32;
+					oct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
+
+					// ASSERT
+					assert_equal(L"medium-sized strings are good for your health", wstring(cmdtext->rgwz));
+					assert_equal(wcslen(L"medium-sized strings are good for your health") + 1, cmdtext->cwActual);
+				}
+
+
+				test( OnlyTheTextForTheFirstCommandIsReturned )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					const size_t buffer_size = 50;
+					wchar_t buffer[sizeof(OLECMDTEXT) + (buffer_size - 1) * sizeof(wchar_t)] = { 0 };
+					OLECMDTEXT *cmdtext = reinterpret_cast<OLECMDTEXT *>(buffer);
+					OLECMD cmd[] = { { 31, }, { 10, }, };
+
+					cmdtext->cmdtextf = OLECMDTEXTF_NAME;
+
+					oct.add_command(10, [] (unsigned) { }, false, [] (unsigned, unsigned &) { return true; },
+						[] (unsigned, wstring &caption) { return caption = L"a short name", true; });
+					oct.add_command(31, [] (unsigned) { }, true, [] (unsigned, unsigned &) { return true; },
+						[] (unsigned item, wstring &caption) -> bool {
+
+						if (item == 0)
+							caption = L"Lorem ipsum dolor sit amet, consectetur adipiscing elit";
+						else
+							caption.clear();
+						return true;
+					});
+
+					// ACT
+					cmdtext->cwBuf = 23;
+					oct.QueryStatus(&c_guid1, _countof(cmd), cmd, cmdtext);
+
+					// ASSERT
+					assert_equal(L"Lorem ipsum dolor sit ", wstring(cmdtext->rgwz));
+				}
+
+
+				test( MissingDynamicTextSetsNameStringToZero )
+				{
+					// INIT
+					ole_command_target_final oct(c_guid1);
+					const size_t buffer_size = 50;
+					wchar_t buffer[sizeof(OLECMDTEXT) + (buffer_size - 1) * sizeof(wchar_t)] = { 0 };
+					OLECMDTEXT *cmdtext = reinterpret_cast<OLECMDTEXT *>(buffer);
+					OLECMD cmd[] = { { 31, }, { 10, }, };
+
+					oct.add_command(10, [] (unsigned) { }, false, [] (unsigned, unsigned &) { return true; },
+						[] (unsigned, wstring &) { return false; });
+					oct.add_command(31, [] (unsigned) { }, true);
+
+					cmdtext->cmdtextf = OLECMDTEXTF_NAME;
+
+					// ACT
+					cmdtext->cwBuf = 23;
+					cmdtext->cwActual = 1542231;
+					oct.QueryStatus(&c_guid1, 1, &cmd[0], cmdtext);
+
+					// ASSERT
+					assert_equal(0u, cmdtext->cwActual);
+
+					// ACT
+					cmdtext->cwBuf = 23;
+					cmdtext->cwActual = 1542231;
+					oct.QueryStatus(&c_guid1, 1, &cmd[1], cmdtext);
+
+					// ASSERT
+					assert_equal(0u, cmdtext->cwActual);
+				}
+
+			end_test_suite
 		}
-
-		begin_test_suite( CommandTargetTests )
-			test( CommandTargetRejectsProcessingOfCommandsFromUnknownSets )
-			{
-				// INIT
-				const command<int>::ptr c = command<int>::ptr(new mock_command(0));
-				CommandTargetFinal<int, &c_guid1> ct1(&c, &c + 1);
-				IOleCommandTarget &ict1 = ct1;
-				CommandTargetFinal<int, &c_guid2> ct2(&c, &c + 1);
-				IOleCommandTarget &ict2 = ct2;
-				OLECMD dummy[1];
-
-				// ACT / ASSERT
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.QueryStatus(&c_guid2, 1, dummy, NULL));
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.QueryStatus(&c_guid3, 1, dummy, NULL));
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.QueryStatus(&c_guid1, 1, dummy, NULL));
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.QueryStatus(&c_guid3, 1, dummy, NULL));
-
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.Exec(&c_guid2, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict1.Exec(&c_guid3, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.Exec(&c_guid1, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-				assert_equal(OLECMDERR_E_UNKNOWNGROUP, ict2.Exec(&c_guid3, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-			}
-
-
-			static int getSingleCommandState(IOleCommandTarget &target, const GUID &command_set, unsigned command)
-			{
-				OLECMD cmd = { command, 0 };
-
-				assert_equal(S_OK, target.QueryStatus(&command_set, 1, &cmd, NULL));
-				return cmd.cmdf;
-			}
-
-			test( CommandStateIsResponded )
-			{
-				// INIT
-				const shared_ptr<mock_command> c = shared_ptr<mock_command>(new mock_command(11));
-				CommandTargetFinal<int, &c_guid1> ct(&c, &c + 1);
-
-				c->state = 0;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE,
-					getSingleCommandState(ct, c_guid1, 11));
-
-				// INIT
-				c->state = command<int>::supported;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE,
-					getSingleCommandState(ct, c_guid1, 11));
-
-				// INIT
-				c->state = command<int>::supported | command<int>::enabled;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED | OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE,
-					getSingleCommandState(ct, c_guid1, 11));
-
-				// INIT
-				c->state = command<int>::supported | command<int>::visible;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_SUPPORTED, getSingleCommandState(ct, c_guid1, 11));
-
-				// INIT
-				c->state = command<int>::supported | command<int>::visible | command<int>::checked;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_LATCHED, getSingleCommandState(ct, c_guid1, 11));
-			}
-
-
-			test( CommandIsSelectedByID )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(11)),
-					shared_ptr<mock_command>(new mock_command(13)),
-					shared_ptr<mock_command>(new mock_command(19)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-
-				c[1]->state = command<int>::supported | command<int>::visible | command<int>::enabled;
-				c[2]->state = command<int>::supported | command<int>::visible | command<int>::checked;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE, getSingleCommandState(ct, c_guid1, 10));
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(ct, c_guid1, 11));
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_LATCHED, getSingleCommandState(ct, c_guid1, 13));
-				assert_equal(OLECMDF_DEFHIDEONCTXTMENU | OLECMDF_INVISIBLE, getSingleCommandState(ct, c_guid1, 19));
-			}
-
-
-			test( MissingCommandsAreNotSupported )
-			{
-				// INIT
-				const shared_ptr<mock_command> c = shared_ptr<mock_command>(new mock_command(11));
-				CommandTargetFinal<int, &c_guid2> ct(&c, &c + 1);
-				OLECMD cmd = { 10, 10000 };
-
-				// ACT / ASSERT
-				assert_equal(OLECMDERR_E_NOTSUPPORTED, ct.QueryStatus(&c_guid2, 1, &cmd, NULL));
-
-				// ASSERT
-				assert_equal(0u, cmd.cmdf);
-
-				// INIT
-				cmd.cmdID = 12;
-				cmd.cmdf = 123;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDERR_E_NOTSUPPORTED, ct.QueryStatus(&c_guid2, 1, &cmd, NULL));
-
-				// ASSERT
-				assert_equal(0u, cmd.cmdf);
-			}
-
-
-			test( GroupCommandIsSelectedByRange )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31, 17)),
-					shared_ptr<mock_command>(new mock_command(130, 2)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-				OLECMD cmd = { 48, 10000 };
-
-				c[0]->state = command<int>::supported;
-				c[1]->state = command<int>::supported | command<int>::enabled | command<int>::visible;
-				c[2]->state = command<int>::supported | command<int>::visible;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(ct, c_guid1, 31));
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(ct, c_guid1, 35));
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, getSingleCommandState(ct, c_guid1, 47));
-				assert_equal(OLECMDERR_E_NOTSUPPORTED, ct.QueryStatus(&c_guid1, 1, &cmd, NULL));
-
-				// ASSERT
-				assert_equal(0u, cmd.cmdf);
-
-				// INIT
-				cmd.cmdID = 132;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_SUPPORTED, getSingleCommandState(ct, c_guid1, 130));
-				assert_equal(OLECMDF_SUPPORTED, getSingleCommandState(ct, c_guid1, 131));
-				assert_equal(OLECMDERR_E_NOTSUPPORTED, ct.QueryStatus(&c_guid1, 1, &cmd, NULL));
-			}
-
-
-			test( EmptyGroupIsRespondedAsOKButDisabledAndInvisible )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31, 0)),
-					shared_ptr<mock_command>(new mock_command(130, 2)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-
-				c[1]->state = command<int>::supported | command<int>::enabled | command<int>::visible;
-
-				// ACT / ASSERT
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_INVISIBLE | OLECMDF_DEFHIDEONCTXTMENU, getSingleCommandState(ct, c_guid1, 31));
-			}
-
-
-			test( SeveralCommandsCanBeProcessed )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31, 17)),
-					shared_ptr<mock_command>(new mock_command(130, 2)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-				OLECMD cmd[3] = { 0 };
-
-				c[0]->state = command<int>::supported;
-				c[1]->state = command<int>::supported | command<int>::enabled | command<int>::visible;
-				c[2]->state = command<int>::supported | command<int>::visible;
-
-				cmd[0].cmdID = 10;
-				cmd[1].cmdID = 33;
-
-				// ACT / ASSERT
-				assert_equal(S_OK, ct.QueryStatus(&c_guid1, 2, cmd, NULL));
-
-				// ASSERT
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_INVISIBLE | OLECMDF_DEFHIDEONCTXTMENU, (int)cmd[0].cmdf);
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, (int)cmd[1].cmdf);
-
-				// INIT
-				cmd[0].cmdID = 34;
-				cmd[1].cmdID = 10;
-				cmd[2].cmdID = 131;
-
-				// ACT / ASSERT
-				assert_equal(S_OK, ct.QueryStatus(&c_guid1, 3, cmd, NULL));
-
-				// ASSERT
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_ENABLED, (int)cmd[0].cmdf);
-				assert_equal(OLECMDF_SUPPORTED | OLECMDF_INVISIBLE | OLECMDF_DEFHIDEONCTXTMENU, (int)cmd[1].cmdf);
-				assert_equal(OLECMDF_SUPPORTED, (int)cmd[2].cmdf);
-			}
-
-
-			test( DifferentContextsArePassedInToQueryState )
-			{
-				// INIT
-				shared_ptr< mock_command_t<int> > c1 = shared_ptr< mock_command_t<int> >(new mock_command_t<int>(11));
-				CommandTargetFinal<int, &c_guid1> ct1(&c1, &c1 + 1);
-				shared_ptr< mock_command_t<string> > c2 = shared_ptr< mock_command_t<string> >(new mock_command_t<string>(12));
-				CommandTargetFinal<string, &c_guid2> ct2(&c2, &c2 + 1);
-
-				ct1.context = 13222;
-				ct2.context = "foo";
-
-				// ACT
-				getSingleCommandState(ct1, c_guid1, 11);
-				getSingleCommandState(ct2, c_guid2, 12);
-
-				// ASSERT
-				assert_equal(13222, c1->context);
-				assert_equal("foo", c2->context);
-
-				// INIT
-				ct1.context = 13;
-				ct2.context = "bar";
-
-				// ACT
-				getSingleCommandState(ct1, c_guid1, 11);
-				getSingleCommandState(ct2, c_guid2, 12);
-
-				// ASSERT
-				assert_equal(13, c1->context);
-				assert_equal("bar", c2->context);
-			}
-
-
-			test( ExceptionsFromCommandAreAbsorbed )
-			{
-				// INIT
-				shared_ptr<throwing_command> c = shared_ptr<throwing_command>(new throwing_command());
-				CommandTargetFinal<int, &c_guid1> ct(&c, &c + 1);
-				OLECMD cmd = { 1, 0 };
-
-				// ACT / ASSERT
-				assert_equal(E_UNEXPECTED, ct.QueryStatus(&c_guid1, 1, &cmd, NULL));
-				assert_equal(E_UNEXPECTED, ct.Exec(&c_guid1, 1, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-			}
-
-
-			test( CommandIsExecutedBasedOnID )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31)),
-					shared_ptr<mock_command>(new mock_command(130)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-
-				// ACT
-				assert_equal(S_OK, ct.Exec(&c_guid1, 10, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-
-				// ACT / ASSERT
-				assert_is_true(c[0]->executed);
-				assert_is_false(c[1]->executed);
-				assert_is_false(c[2]->executed);
-
-				// ACT
-				assert_equal(S_OK, ct.Exec(&c_guid1, 31, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-				assert_equal(S_OK, ct.Exec(&c_guid1, 130, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-
-				// ACT / ASSERT
-				assert_is_true(c[0]->executed);
-				assert_is_true(c[1]->executed);
-				assert_is_true(c[2]->executed);
-			}
-
-
-			test( MissingCommandIsReported )
-			{
-				// INIT
-				shared_ptr<mock_command> c = shared_ptr<mock_command>(new mock_command(33));
-				CommandTargetFinal<int, &c_guid1> ct(&c, &c + 1);
-
-				// ACT / ASSERT
-				assert_equal(OLECMDERR_E_NOTSUPPORTED, ct.Exec(&c_guid1, 32, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-				assert_equal(OLECMDERR_E_NOTSUPPORTED, ct.Exec(&c_guid1, 34, OLECMDEXECOPT_DODEFAULT, NULL, NULL));
-			}
-
-
-			test( ContextIsPassedForExecution )
-			{
-				// INIT
-				shared_ptr< mock_command_t<int> > c1 = shared_ptr< mock_command_t<int> >(new mock_command_t<int>(11));
-				CommandTargetFinal<int, &c_guid1> ct1(&c1, &c1 + 1);
-				shared_ptr< mock_command_t<string> > c2 = shared_ptr< mock_command_t<string> >(new mock_command_t<string>(12));
-				CommandTargetFinal<string, &c_guid2> ct2(&c2, &c2 + 1);
-
-				ct1.context = 1322;
-				ct2.context = "fooE";
-
-				// ACT
-				ct1.Exec(&c_guid1, 11, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-				ct2.Exec(&c_guid2, 12, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-
-				// ASSERT
-				assert_equal(1322, c1->context);
-				assert_equal("fooE", c2->context);
-
-				// INIT
-				ct1.context = 13;
-				ct2.context = "bar";
-
-				// ACT
-				ct1.Exec(&c_guid1, 11, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-				ct2.Exec(&c_guid2, 12, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-
-				// ASSERT
-				assert_equal(13, c1->context);
-				assert_equal("bar", c2->context);
-			}
-
-
-			test( GroupCommandIsSelectedByRangeForExecution )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31, 17)),
-					shared_ptr<mock_command>(new mock_command(130, 2)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-
-				// ACT / ASSERT
-				ct.Exec(&c_guid1, 31, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-
-				// ASSERT
-				assert_equal(0u, c[1]->item_index);
-
-				// ACT / ASSERT
-				ct.Exec(&c_guid1, 32, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-
-				// ASSERT
-				assert_equal(1u, c[1]->item_index);
-
-				// ACT / ASSERT
-				ct.Exec(&c_guid1, 47, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-
-				// ASSERT
-				assert_equal(16u, c[1]->item_index);
-
-				// ACT / ASSERT
-				ct.Exec(&c_guid1, 131, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
-
-				// ASSERT
-				assert_equal(1u, c[2]->item_index);
-			}
-
-
-			test( GetingTheCaptionFillsTheBufferProvidedWithZeroTermination )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31, 2)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-				const size_t buffer_size = 50;
-				wchar_t buffer[sizeof(OLECMDTEXT) + (buffer_size - 1) * sizeof(wchar_t)] = { 0 };
-				OLECMDTEXT *cmdtext = reinterpret_cast<OLECMDTEXT *>(buffer);
-				OLECMD cmd = { };
-
-				cmdtext->cmdtextf = OLECMDTEXTF_NAME;
-				cmdtext->cwBuf = 20;
-				c[0]->names.push_back(L"a short name");
-				c[1]->names.push_back(L"Lorem ipsum dolor sit amet, consectetur adipiscing elit");
-				c[1]->names.push_back(L"medium-sized strings are good for your health");
-
-				// ACT
-				cmd.cmdID = 10;
-				ct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
-
-				// ASSERT
-				assert_equal(L"a short name", wstring(cmdtext->rgwz));
-				assert_equal(static_cast<ULONG>(c[0]->names[0].size() + 1), cmdtext->cwActual);
-
-				// ACT
-				cmd.cmdID = 31;
-				ct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
-
-				// ASSERT
-				assert_equal(L"Lorem ipsum dolor s", wstring(cmdtext->rgwz));
-				assert_equal(static_cast<ULONG>(c[1]->names[0].size() + 1), cmdtext->cwActual);
-
-				// ACT
-				cmdtext->cwBuf = 22;
-				ct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
-
-				// ASSERT
-				assert_equal(L"Lorem ipsum dolor sit", wstring(cmdtext->rgwz));
-				assert_equal(static_cast<ULONG>(c[1]->names[0].size() + 1), cmdtext->cwActual);
-
-				// ACT
-				cmdtext->cwBuf = 46;
-				cmd.cmdID = 32;
-				ct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
-
-				// ASSERT
-				assert_equal(L"medium-sized strings are good for your health", wstring(cmdtext->rgwz));
-				assert_equal(static_cast<ULONG>(c[1]->names[1].size() + 1), cmdtext->cwActual);
-			}
-
-
-			test( OnlyTheTextForTheFirstCommandIsReturned )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-				const size_t buffer_size = 50;
-				wchar_t buffer[sizeof(OLECMDTEXT) + (buffer_size - 1) * sizeof(wchar_t)] = { 0 };
-				OLECMDTEXT *cmdtext = reinterpret_cast<OLECMDTEXT *>(buffer);
-				OLECMD cmd[] = { { 31, }, { 10, }, };
-
-				cmdtext->cmdtextf = OLECMDTEXTF_NAME;
-				c[0]->names.push_back(L"a short name");
-				c[1]->names.push_back(L"Lorem ipsum dolor sit amet, consectetur adipiscing elit");
-
-				// ACT
-				cmdtext->cwBuf = 23;
-				ct.QueryStatus(&c_guid1, _countof(cmd), cmd, cmdtext);
-
-				// ASSERT
-				assert_equal(L"Lorem ipsum dolor sit ", wstring(cmdtext->rgwz));
-			}
-
-
-			test( MissingDynamicTextSetsNameStringToZero )
-			{
-				// INIT
-				const shared_ptr<mock_command> c[] = {
-					shared_ptr<mock_command>(new mock_command(10)),
-					shared_ptr<mock_command>(new mock_command(31)),
-				};
-				CommandTargetFinal<int, &c_guid1> ct(c, c + _countof(c));
-				const size_t buffer_size = 50;
-				wchar_t buffer[sizeof(OLECMDTEXT) + (buffer_size - 1) * sizeof(wchar_t)] = { 0 };
-				OLECMDTEXT *cmdtext = reinterpret_cast<OLECMDTEXT *>(buffer);
-				OLECMD cmd[] = { { 31, }, { 10, }, };
-
-				cmdtext->cmdtextf = OLECMDTEXTF_NAME;
-
-				// ACT
-				cmdtext->cwBuf = 23;
-				cmdtext->cwActual = 1542231;
-				ct.QueryStatus(&c_guid1, _countof(cmd), cmd, cmdtext);
-
-				// ASSERT
-				assert_equal(0u, cmdtext->cwActual);
-			}
-
-
-			test( ContextIsPassedWhenQueryingName )
-			{
-				// INIT
-				shared_ptr< mock_command_t<string> > c = shared_ptr< mock_command_t<string> >(new mock_command_t<string>(12));
-				CommandTargetFinal<string, &c_guid1> ct(&c, &c + 1);
-				const size_t buffer_size = 50;
-				wchar_t buffer[sizeof(OLECMDTEXT) + (buffer_size - 1) * sizeof(wchar_t)] = { 0 };
-				OLECMDTEXT *cmdtext = reinterpret_cast<OLECMDTEXT *>(buffer);
-				OLECMD cmd = { 12, };
-
-				// ACT
-				ct.context = "sdsdf";
-				ct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
-
-				// ASSERT
-				assert_equal("sdsdf", c->context);
-
-				// ACT
-				ct.context = "something else";
-				ct.QueryStatus(&c_guid1, 1, &cmd, cmdtext);
-
-				// ASSERT
-				assert_equal("something else", c->context);
-			}
-		end_test_suite
 	}
 }

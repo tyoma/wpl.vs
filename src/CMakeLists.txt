@@ -8,6 +8,7 @@ set(WPL_VS_SOURCES
 	async.cpp
 	factory.cpp
 	frame.cpp
+	ole-command-target.cpp
 	pane.cpp
 	vspackage.cpp
 )
