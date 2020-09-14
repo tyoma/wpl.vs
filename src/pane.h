@@ -49,7 +49,6 @@ namespace wpl
 			std::shared_ptr<stylesheet> stylesheet_;
 
 			std::shared_ptr<wpl::view_host> host;
-			wpl::signal<void ()> closed;
 
 		private:
 			BEGIN_COM_MAP(pane_impl)
@@ -66,9 +65,6 @@ namespace wpl
 			virtual STDMETHODIMP LoadViewState(IStream *stream);
 			virtual STDMETHODIMP SaveViewState(IStream *stream);
 			virtual STDMETHODIMP TranslateAccelerator(MSG *msg);
-
-		private:
-			CComPtr<IServiceProvider> _service_provider;
 		};
 	}
 }

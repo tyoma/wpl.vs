@@ -23,9 +23,11 @@
 #include <atlbase.h>
 #include <atlcom.h>
 
-#include <vsshell.h>
 #include <wpl/concepts.h>
 #include <wpl/vs/pane.h>
+
+typedef struct IVsWindowFrame IVsWindowFrame;
+typedef struct IVsWindowFrame2 IVsWindowFrame2;
 
 namespace wpl
 {
@@ -60,8 +62,9 @@ namespace wpl
 
 		private:
 			const CComPtr<IVsWindowFrame> _underlying;
+			const CComPtr<IVsWindowFrame2> _underlying2;
 			pane_impl &_pane;
-			wpl::slot_connection _closed_connection;
+			DWORD_PTR _advise_cookie;
 		};
 	}
 }

@@ -36,12 +36,14 @@ namespace wpl
 		pane_impl::~pane_impl()
 		{	LOG(PREAMBLE "destroyed...") % A(this);	}
 
-		STDMETHODIMP pane_impl::SetSite(IServiceProvider *site)
-		{	return _service_provider = site, S_OK;	}
+		STDMETHODIMP pane_impl::SetSite(IServiceProvider * /*site*/)
+		{	return S_OK;	}
 
 		STDMETHODIMP pane_impl::CreatePaneWindow(HWND hparent, int, int, int, int, HWND *)
 		{
+			LOG(PREAMBLE "CreatePaneWindow called. Constructing view_host...") % A(this);
 			host.reset(new win32::view_host(hparent, backbuffer, renderer, text_engine));
+			LOG(PREAMBLE "...view_host constructed.") % A(host.get());
 			return S_OK;
 		}
 
@@ -51,8 +53,6 @@ namespace wpl
 		STDMETHODIMP pane_impl::ClosePane()
 		{
 			LOG(PREAMBLE "ClosePane called. Releasing...") % A(this);
-			closed();
-			_service_provider.Release();
 			return S_OK;
 		}
 

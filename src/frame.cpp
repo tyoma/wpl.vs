@@ -23,6 +23,7 @@
 #include "pane.h"
 
 #include <logger/log.h>
+#include <vsshell80.h>
 
 #define PREAMBLE "Generic VS Frame/Form: "
 
@@ -32,11 +33,61 @@ namespace wpl
 {
 	namespace vs
 	{
-		frame::frame(const CComPtr<IVsWindowFrame> &underlying, pane_impl &pane_)
-			: _underlying(underlying), _pane(pane_)
+		namespace
 		{
-			_closed_connection = _pane.closed += [this] { close(); };
+			class frame_events_listener : public CComObjectRootEx<CComSingleThreadModel>, public IVsWindowFrameNotify
+			{
+			public:
+				frame_events_listener()
+					: _pane(nullptr)
+				{	}
+
+				void set_sink(pane &pane_)
+				{	_pane = &pane_;	}
+
+			private:
+				BEGIN_COM_MAP(frame_events_listener)
+					COM_INTERFACE_ENTRY(IVsWindowFrameNotify)
+				END_COM_MAP()
+
+			private:
+				virtual STDMETHODIMP OnShow(FRAMESHOW fShow)
+				{
+					switch (fShow)
+					{
+					case FRAMESHOW_TabActivated: _pane->activated(); break;
+					case FRAMESHOW_WinClosed: _pane->close(); break;
+					}
+					return S_OK;
+				}
+
+				virtual STDMETHODIMP OnMove()
+				{	return S_OK;	}
+
+				virtual STDMETHODIMP OnSize()
+				{	return S_OK;	}
+
+				virtual STDMETHODIMP OnDockableChange(BOOL /*fDockable*/)
+				{	return S_OK;	}
+
+			private:
+				pane *_pane;
+			};
+		}
+
+		frame::frame(const CComPtr<IVsWindowFrame> &underlying, pane_impl &pane_)
+			: _underlying(underlying), _underlying2(CComQIPtr<IVsWindowFrame2>(underlying)), _pane(pane_)
+		{
 			_underlying->SetProperty(VSFPROPID_FrameMode, CComVariant(VSFM_MdiChild));
+			if (_underlying2)
+			{
+				CComObject<frame_events_listener> *plistener;
+				CComObject<frame_events_listener>::CreateInstance(&plistener);
+				CComPtr< CComObject<frame_events_listener> > listener(plistener);
+
+				listener->set_sink(*this);
+				_underlying2->Advise(listener, &_advise_cookie);
+			}
 			LOG(PREAMBLE "constructed...") % A(this);
 		}
 
@@ -44,6 +95,8 @@ namespace wpl
 		{
 			LOG(PREAMBLE "destroying...") % A(this);
 			_underlying->CloseFrame(FRAMECLOSE_NoSave);
+			if (_underlying2)
+				_underlying2->Unadvise(_advise_cookie);
 		}
 
 		void frame::set_view(const shared_ptr<wpl::view> &v)

@@ -31,6 +31,8 @@ namespace wpl
 		struct pane : form, command_target
 		{
 			virtual void activate() = 0;
+
+			signal<void ()> activated;
 		};
 	}
 }
