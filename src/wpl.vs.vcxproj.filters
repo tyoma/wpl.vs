@@ -16,6 +16,10 @@
     <ClInclude Include="..\wpl\vs\command.h" />
     <ClInclude Include="..\wpl\vs\command-target.h" />
     <ClInclude Include="..\wpl\vs\ole-command-target.h" />
+    <ClInclude Include="..\wpl\vs\pane.h" />
+    <ClInclude Include="CComObjectEx.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

@@ -25,18 +25,18 @@
 
 #include <vsshell.h>
 #include <wpl/concepts.h>
-#include <wpl/form.h>
+#include <wpl/vs/pane.h>
 
 namespace wpl
 {
 	namespace vs
 	{
-		class pane;
+		class pane_impl;
 
-		class frame : public wpl::form, noncopyable
+		class frame : public pane, noncopyable
 		{
 		public:
-			frame(const CComPtr<IVsWindowFrame> &underlying, pane &pane_);
+			frame(const CComPtr<IVsWindowFrame> &underlying, pane_impl &pane_);
 			~frame();
 
 		private:
@@ -53,9 +53,14 @@ namespace wpl
 			virtual void set_style(unsigned /*styles*/ style);
 			virtual void set_font(const font &font_);
 
+			virtual void add_command(int id, const execute_fn &execute, bool is_group, const query_state_fn &query_state,
+				const get_name_fn &get_name);
+
+			virtual void activate();
+
 		private:
 			const CComPtr<IVsWindowFrame> _underlying;
-			pane &_pane;
+			pane_impl &_pane;
 			wpl::slot_connection _closed_connection;
 		};
 	}

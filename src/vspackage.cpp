@@ -70,6 +70,9 @@ namespace wpl
 			}
 		}
 
+		CComPtr<IServiceProvider> package::get_service_provider() const
+		{	return _service_provider;	}
+
 		CComPtr<_DTE> package::get_dte() const
 		{
 			if (!_dte && _service_provider)

@@ -50,6 +50,7 @@ namespace wpl
 			END_COM_MAP()
 
 		protected:
+			CComPtr<IServiceProvider> get_service_provider() const;
 			CComPtr<_DTE> get_dte() const;
 			CComPtr<IVsUIShell> get_shell() const;
 			const factory &get_factory() const;

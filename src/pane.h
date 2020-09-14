@@ -27,6 +27,7 @@
 #include <vsshell.h>
 #include <wpl/form.h>
 #include <wpl/visual.h>
+#include <wpl/vs/ole-command-target.h>
 
 namespace wpl
 {
@@ -35,11 +36,11 @@ namespace wpl
 
 	namespace vs
 	{
-		class pane : public CComObjectRootEx<CComSingleThreadModel>, public IVsWindowPane
+		class pane_impl : public CComObjectRootEx<CComSingleThreadModel>, public IVsWindowPane, public ole_command_target
 		{
 		public:
-			pane();
-			~pane();
+			pane_impl(const GUID &menu_group_id);
+			~pane_impl();
 
 		public:
 			std::shared_ptr<gcontext::surface_type> backbuffer;
@@ -51,8 +52,9 @@ namespace wpl
 			wpl::signal<void ()> closed;
 
 		private:
-			BEGIN_COM_MAP(pane)
+			BEGIN_COM_MAP(pane_impl)
 				COM_INTERFACE_ENTRY(IVsWindowPane)
+				COM_INTERFACE_ENTRY(IOleCommandTarget)
 			END_COM_MAP()
 
 		private:

@@ -32,7 +32,7 @@ namespace wpl
 {
 	namespace vs
 	{
-		frame::frame(const CComPtr<IVsWindowFrame> &underlying, pane &pane_)
+		frame::frame(const CComPtr<IVsWindowFrame> &underlying, pane_impl &pane_)
 			: _underlying(underlying), _pane(pane_)
 		{
 			_closed_connection = _pane.closed += [this] { close(); };
@@ -78,5 +78,15 @@ namespace wpl
 
 		void frame::set_font(const font &)
 		{	throw 0;	}
+
+		void frame::add_command(int id, const execute_fn &execute, bool is_group, const query_state_fn &query_state,
+			const get_name_fn &get_name)
+		{	_pane.add_command(id, execute, is_group, query_state, get_name);	}
+
+		void frame::activate()
+		{
+			_underlying->Show();
+			LOG(PREAMBLE "made active...") % A(this);
+		}
 	}
 }

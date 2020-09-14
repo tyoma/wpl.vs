@@ -18,51 +18,19 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 
-#include "pane.h"
+#pragma once
 
-#include <logger/log.h>
-#include <wpl/win32/view_host.h>
+#include "command-target.h"
 
-#define PREAMBLE "Generic VS Pane: "
+#include <wpl/form.h>
 
 namespace wpl
 {
 	namespace vs
 	{
-		pane_impl::pane_impl(const GUID &menu_group_id)
-			: ole_command_target(menu_group_id)
-		{	LOG(PREAMBLE "constructed...") % A(this);	}
-
-		pane_impl::~pane_impl()
-		{	LOG(PREAMBLE "destroyed...") % A(this);	}
-
-		STDMETHODIMP pane_impl::SetSite(IServiceProvider *site)
-		{	return _service_provider = site, S_OK;	}
-
-		STDMETHODIMP pane_impl::CreatePaneWindow(HWND hparent, int, int, int, int, HWND *)
+		struct pane : form, command_target
 		{
-			host.reset(new win32::view_host(hparent, backbuffer, renderer, text_engine));
-			return S_OK;
-		}
-
-		STDMETHODIMP pane_impl::GetDefaultSize(SIZE *)
-		{	return S_FALSE;	}
-
-		STDMETHODIMP pane_impl::ClosePane()
-		{
-			LOG(PREAMBLE "ClosePane called. Releasing...") % A(this);
-			closed();
-			_service_provider.Release();
-			return S_OK;
-		}
-
-		STDMETHODIMP pane_impl::LoadViewState(IStream *)
-		{	return E_NOTIMPL;	}
-
-		STDMETHODIMP pane_impl::SaveViewState(IStream *)
-		{	return E_NOTIMPL;	}
-
-		STDMETHODIMP pane_impl::TranslateAccelerator(MSG *)
-		{	return E_NOTIMPL;	}
+			virtual void activate() = 0;
+		};
 	}
 }

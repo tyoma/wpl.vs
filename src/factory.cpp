@@ -20,6 +20,7 @@
 
 #include <wpl/vs/factory.h>
 
+#include "CComObjectEx.h"
 #include "frame.h"
 #include "pane.h"
 
@@ -67,13 +68,13 @@ namespace wpl
 		factory::~factory()
 		{	_shell.Release();	}
 
-		shared_ptr<form> factory::create_pane() const
+		shared_ptr<pane> factory::create_pane(const GUID &menu_group_id, int menu_id) const
 		{
 			// {BED6EA71-BEE3-4E71-AFED-CFFBA521CF46}
 			const GUID c_settingsSlot = { 0xbed6ea71, 0xbee3, 0x4e71, { 0xaf, 0xed, 0xcf, 0xfb, 0xa5, 0x21, 0xcf, 0x46 } };
 
-			CComObject<pane> *pane_object;
-			CComObject<pane>::CreateInstance(&pane_object);
+			CComObjectEx<pane_impl> *pane_object;
+			CComObjectEx<pane_impl>::CreateInstance(&pane_object, menu_group_id);
 			CComPtr<IVsWindowPane> sp(pane_object);
 			CComPtr<IVsWindowFrame> frame_;
 
@@ -85,11 +86,19 @@ namespace wpl
 			if (S_OK == _shell.CreateToolWindow(CTW_fMultiInstance | CTW_fToolbarHost, _next_tool_id++, sp, GUID_NULL, c_settingsSlot,
 				GUID_NULL, NULL, L"", NULL, &frame_) && frame_)
 			{
+				CComVariant vtbhost;
+
+				if (S_OK == frame_->GetProperty(VSFPROPID_ToolbarHost, &vtbhost) && vtbhost.punkVal)
+				{
+					if (CComQIPtr<IVsToolWindowToolbarHost> tbhost = vtbhost.punkVal)
+						tbhost->AddToolbar(VSTWT_TOP, &menu_group_id, menu_id);
+				}
+
 				LOG(PREAMBLE "frame created.") % A(frame_);
 				return make_shared<frame>(frame_, *pane_object);
 			}
 			LOGE(PREAMBLE "failed to create frame!");
-			return shared_ptr<form>();
+			return shared_ptr<frame>();
 		}
 
 		shared_ptr<form> factory::create_modal() const

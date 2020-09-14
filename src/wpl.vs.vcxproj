@@ -47,8 +47,10 @@
     <ClInclude Include="..\wpl\vs\command.h" />
     <ClInclude Include="..\wpl\vs\factory.h" />
     <ClInclude Include="..\wpl\vs\ole-command-target.h" />
+    <ClInclude Include="..\wpl\vs\pane.h" />
     <ClInclude Include="..\wpl\vs\vspackage.h" />
     <ClInclude Include="async.h" />
+    <ClInclude Include="CComObjectEx.h" />
     <ClInclude Include="frame.h" />
     <ClInclude Include="pane.h" />
   </ItemGroup>

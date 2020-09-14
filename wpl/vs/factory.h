@@ -22,12 +22,15 @@
 
 #include <wpl/factory.h>
 
+typedef struct _GUID GUID;
 typedef struct IVsUIShell IVsUIShell;
 
 namespace wpl
 {
 	namespace vs
 	{
+		struct pane;
+
 		class factory : public wpl::factory
 		{
 		public:
@@ -37,7 +40,7 @@ namespace wpl
 				const std::shared_ptr<stylesheet> &stylesheet_);
 			~factory();
 
-			std::shared_ptr<form> create_pane() const;
+			std::shared_ptr<pane> create_pane(const GUID &menu_group_id, int menu_id) const;
 			std::shared_ptr<form> create_modal() const;
 
 		private:
