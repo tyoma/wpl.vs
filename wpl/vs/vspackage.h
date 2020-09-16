@@ -56,6 +56,8 @@ namespace wpl
 			const factory &get_factory() const;
 
 		private:
+			virtual std::shared_ptr<wpl::stylesheet> create_stylesheet(
+				const std::shared_ptr<gcontext::text_engine_type> &text_engine) const = 0;
 			virtual void initialize(factory &factory_) = 0;
 			virtual void terminate() throw() = 0;
 

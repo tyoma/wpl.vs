@@ -21,6 +21,7 @@
 #include "pane.h"
 
 #include <logger/log.h>
+#include <wpl/stylesheet.h>
 #include <wpl/win32/view_host.h>
 
 #define PREAMBLE "Generic VS Pane: "
@@ -43,6 +44,7 @@ namespace wpl
 		{
 			LOG(PREAMBLE "CreatePaneWindow called. Constructing view_host...") % A(this);
 			host.reset(new win32::view_host(hparent, backbuffer, renderer, text_engine));
+			host->set_background_color(stylesheet_->get_color("background"));
 			LOG(PREAMBLE "...view_host constructed.") % A(host.get());
 			return S_OK;
 		}

@@ -170,10 +170,10 @@ namespace wpl
 			LOG(PREAMBLE "initializing wpl support (backbuffer, renderer, text_engine, etc.)...");
 
 			shared_ptr<text_engine_composite> tec(new text_engine_composite);
+			shared_ptr<gcontext::text_engine_type> te(tec, &tec->text_engine);
 
 			_factory = make_shared<factory>(*_shell, make_shared<gcontext::surface_type>(1, 1, 16),
-				make_shared<gcontext::renderer_type>(2), shared_ptr<gcontext::text_engine_type>(tec, &tec->text_engine),
-				nullptr);
+				make_shared<gcontext::renderer_type>(2), te, create_stylesheet(te));
 
 			LOG(PREAMBLE "entering derived class initialization...");
 
