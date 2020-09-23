@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<Extern href="command-ids.h"/>
+
+	<Extern href="stdidcmd.h"/>
+	<Extern href="vsshlids.h"/>
+
+	<Commands package="guidStylesDiscoverPkg">
+		<Menus>
+			<Menu guid="guidGlobalCmdSet" id="IDM_SD_MM_STYLESDISCOVER" priority="0x700" type="Menu">
+				<Parent guid="guidSHLMainMenu" id="IDG_VS_MM_TOOLSADDINS" />
+				<Strings>
+					<ButtonText>WPL.VS - Styles Discover</ButtonText>
+				</Strings>
+			</Menu>
+		</Menus>
+
+		<Groups>
+			<Group guid="guidGlobalCmdSet" id="IDG_SD_MAIN" priority="0x0800">
+				<Parent guid="guidGlobalCmdSet" id="IDM_SD_MM_STYLESDISCOVER" />
+			</Group>
+		</Groups>
+
+		<Buttons>
+			<!-- Main Menu Items -->
+			<Button guid="guidGlobalCmdSet" id="cmdidShowStyles" priority="0x0110" type="Button">
+				<Parent guid="guidGlobalCmdSet" id="IDG_SD_MAIN" />
+				<CommandFlag>DontCache</CommandFlag>
+            <CommandFlag>DynamicVisibility</CommandFlag>
+            <Strings>
+					<ButtonText>Show VisualStudio Styles...</ButtonText>
+				</Strings>
+			</Button>
+
+		</Buttons>
+	</Commands>
+</CommandTable>

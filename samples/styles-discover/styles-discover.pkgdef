@@ -1,0 +1,22 @@
+[$RootKey$\InstalledProducts\StylesDiscover]
+@="MicroProfiler"
+"Package"="D445B09F-7792-47A8-A503-0FA4AC0D34BF"
+"UseInterface"=dword:0
+"PID"="1.0"
+
+[$RootKey$\Packages\{D445B09F-7792-47A8-A503-0FA4AC0D34BF}]
+"InprocServer32"="$PackageFolder$\styles-discover.dll"
+"AllowsBackgroundLoad"=dword:00000001
+
+[$RootKey$\AutoLoadPackages\{ADFC4E64-0397-11D1-9F4E-00A0C911004F}]
+"{D445B09F-7792-47A8-A503-0FA4AC0D34BF}"=dword:2
+
+[$RootKey$\AutoLoadPackages\{F1536EF8-92EC-443C-9ED7-FDADF150DA82}]
+"{D445B09F-7792-47A8-A503-0FA4AC0D34BF}"=dword:2
+
+[$RootKey$\Menus]
+"{D445B09F-7792-47A8-A503-0FA4AC0D34BF}"=", 1000, 1"
+
+[$RootKey$\Packages\{D445B09F-7792-47A8-A503-0FA4AC0D34BF}\SatelliteDll]
+"DllName"="styles-discover.ui.dll"
+"Path"="$PackageFolder$"
