@@ -50,9 +50,12 @@ namespace wpl
 			END_COM_MAP()
 
 		protected:
+			package();
+
 			CComPtr<IServiceProvider> get_service_provider() const;
 			CComPtr<_DTE> get_dte() const;
 			CComPtr<IVsUIShell> get_shell() const;
+			CComPtr<IVsFontAndColorStorage> get_fonts_and_colors() const;
 			const factory &get_factory() const;
 
 		private:
@@ -73,13 +76,15 @@ namespace wpl
 			STDMETHODIMP GetPropertyPage(REFGUID rguidPage, VSPROPSHEETPAGE *ppage);
 
 		private:
-			void initialize(CComPtr<IVsUIShell> shell);
+			void try_initialize();
 
 		private:
 			CComPtr<IServiceProvider> _service_provider;
 			mutable CComPtr<_DTE> _dte;
 			CComPtr<IVsUIShell> _shell;
+			CComPtr<IVsFontAndColorStorage> _fonts_and_colors;
 			std::shared_ptr<factory> _factory;
+			bool _initialized;
 		};
 	}
 }

@@ -70,6 +70,10 @@ namespace wpl
 			}
 		}
 
+		package::package()
+			: _initialized(false)
+		{	}
+
 		CComPtr<IServiceProvider> package::get_service_provider() const
 		{	return _service_provider;	}
 
@@ -86,6 +90,9 @@ namespace wpl
 		CComPtr<IVsUIShell> package::get_shell() const
 		{	return _shell;	}
 
+		CComPtr<IVsFontAndColorStorage> package::get_fonts_and_colors() const
+		{	return _fonts_and_colors;	}
+
 		const factory &package::get_factory() const
 		{	return *_factory;	}
 
@@ -95,14 +102,20 @@ namespace wpl
 			CComPtr<package> self = this;
 
 			LOG(PREAMBLE "initializing (async)...");
-			obtain_service<_DTE>(sp, [self] (_DTE *p) {
+			obtain_service<_DTE>(sp, [self] (CComPtr<_DTE> p) {
 				LOG(PREAMBLE "DTE obtained (async)...") % A(p);
 				self->_dte = p;
 			});
 			obtain_service<IVsUIShell>(sp, [self] (CComPtr<IVsUIShell> p) {
 				LOG(PREAMBLE "VSShell obtained (async)...") % A(p);
-				self->initialize(p);
+				self->_shell = p;
+				self->try_initialize();
 			});
+			obtain_service<IVsFontAndColorStorage>(sp, [self] (CComPtr<IVsFontAndColorStorage> p) {
+				LOG(PREAMBLE "FontsAndColors obtained (async)...") % A(p);
+				self->_fonts_and_colors = p;
+				self->try_initialize();
+				});
 			ppTask = NULL;
 			return S_OK;
 		}
@@ -119,8 +132,9 @@ namespace wpl
 
 			LOG(PREAMBLE "initializing (sync)...") % A(sp);
 			_service_provider = sp;
-			_service_provider->QueryService(__uuidof(IVsUIShell), &shell);
-			initialize(shell);
+			_service_provider->QueryService(__uuidof(IVsUIShell), &_shell);
+			_service_provider->QueryService(__uuidof(IVsFontAndColorStorage), &_fonts_and_colors);
+			try_initialize();
 			return S_OK;
 		}
 		catch (...)
@@ -161,11 +175,11 @@ namespace wpl
 		STDMETHODIMP package::GetPropertyPage(REFGUID, VSPROPSHEETPAGE *)
 		{	return E_NOTIMPL;	}
 
-		void package::initialize(CComPtr<IVsUIShell> shell)
+		void package::try_initialize()
 		{
-			if (_shell)
+			if (_initialized || !_shell || !_fonts_and_colors)
 				return;
-			_shell = shell;
+			_initialized = true;
 
 			LOG(PREAMBLE "initializing wpl support (backbuffer, renderer, text_engine, etc.)...");
 

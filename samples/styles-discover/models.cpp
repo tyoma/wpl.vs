@@ -46,11 +46,11 @@ styles_model::styles_model(const CComPtr<IVsUIShell2> &vsshell)
 {	}
 
 styles_model::index_type styles_model::get_count() const throw()
-{	return 180u;	}
+{	return 250u;	}
 
 void styles_model::get_text(index_type row, index_type column, wstring &text) const
 {
-	const long long color_index = -(int)row;
+	const long long color_index = 40 - (int)row;
 
 	switch (column)
 	{
@@ -88,6 +88,6 @@ agge::color styles_model::get_color(index_type row) const
 {
 	DWORD clr;
 
-	return S_OK == _vsshell->GetVSSysColorEx(static_cast<VSSYSCOLOREX>(-(int)row), &clr)
+	return S_OK == _vsshell->GetVSSysColorEx(static_cast<VSSYSCOLOREX>(40 - (int)row), &clr)
 		? convert(clr) : agge::color::make(0, 0, 0, 0);
 }
