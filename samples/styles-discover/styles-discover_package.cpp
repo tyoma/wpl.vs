@@ -121,8 +121,8 @@ public:
 	END_COM_MAP()
 
 private:
-	virtual std::shared_ptr<stylesheet> create_stylesheet(
-		const std::shared_ptr<gcontext::text_engine_type> &text_engine) const
+	virtual std::shared_ptr<stylesheet> create_stylesheet(signal<void ()> &, gcontext::text_engine_type &text_engine,
+		IVsUIShell &/*shell*/, IVsFontAndColorStorage &/*font_and_color*/) const
 	{
 		const auto ss = make_shared<stylesheet_db>();
 		const auto background = get_system_color(COLOR_BTNFACE);
@@ -141,7 +141,7 @@ private:
 		ss->set_value("border", 1.0f);
 		ss->set_value("padding", 3.0f);
 
-		ss->set_font("text", text_engine->create_font(L"Segoe UI", 20, false, false, agge::font::key::gf_vertical));
+		ss->set_font("text", text_engine.create_font(L"Segoe UI", 20, false, false, agge::font::key::gf_vertical));
 		return ss;
 	}
 

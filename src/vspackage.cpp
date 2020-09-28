@@ -20,8 +20,8 @@
 
 #include <wpl/win32/font_loader.h>
 
-#include <wpl/vs/vspackage.h>
 #include <wpl/vs/factory.h>
+#include <wpl/vs/vspackage.h>
 
 #include "async.h"
 
@@ -71,7 +71,7 @@ namespace wpl
 		}
 
 		package::package()
-			: _initialized(false)
+			: _broadcast_cookie(0), _initialized(false)
 		{	}
 
 		CComPtr<IServiceProvider> package::get_service_provider() const
@@ -88,10 +88,7 @@ namespace wpl
 		}
 
 		CComPtr<IVsUIShell> package::get_shell() const
-		{	return _shell;	}
-
-		CComPtr<IVsFontAndColorStorage> package::get_fonts_and_colors() const
-		{	return _fonts_and_colors;	}
+		{	return _shell_ui;	}
 
 		const factory &package::get_factory() const
 		{	return *_factory;	}
@@ -106,9 +103,14 @@ namespace wpl
 				LOG(PREAMBLE "DTE obtained (async)...") % A(p);
 				self->_dte = p;
 			});
-			obtain_service<IVsUIShell>(sp, [self] (CComPtr<IVsUIShell> p) {
+			obtain_service<IVsShell>(sp, [self] (CComPtr<IVsShell> p) {
 				LOG(PREAMBLE "VSShell obtained (async)...") % A(p);
 				self->_shell = p;
+				self->try_initialize();
+			});
+			obtain_service<IVsUIShell>(sp, [self] (CComPtr<IVsUIShell> p) {
+				LOG(PREAMBLE "VsUIShell obtained (async)...") % A(p);
+				self->_shell_ui = p;
 				self->try_initialize();
 			});
 			obtain_service<IVsFontAndColorStorage>(sp, [self] (CComPtr<IVsFontAndColorStorage> p) {
@@ -132,7 +134,8 @@ namespace wpl
 
 			LOG(PREAMBLE "initializing (sync)...") % A(sp);
 			_service_provider = sp;
-			_service_provider->QueryService(__uuidof(IVsUIShell), &_shell);
+			_service_provider->QueryService(__uuidof(IVsShell), &_shell);
+			_service_provider->QueryService(__uuidof(IVsUIShell), &_shell_ui);
 			_service_provider->QueryService(__uuidof(IVsFontAndColorStorage), &_fonts_and_colors);
 			try_initialize();
 			return S_OK;
@@ -156,9 +159,11 @@ namespace wpl
 			LOG(PREAMBLE "... Releasing wpl supporting objects...");
 			_factory.reset();
 			LOG(PREAMBLE "... Releasing VS objects.");
+			_shell->UnadviseBroadcastMessages(_broadcast_cookie);
 			_service_provider.Release();
 			_dte.Release();
 			_shell.Release();
+			_shell_ui.Release();
 			LOG(PREAMBLE "... Everything released!");
 			return S_OK;
 		}
@@ -175,19 +180,31 @@ namespace wpl
 		STDMETHODIMP package::GetPropertyPage(REFGUID, VSPROPSHEETPAGE *)
 		{	return E_NOTIMPL;	}
 
+		STDMETHODIMP package::OnBroadcastMessage(UINT message, WPARAM /*wparam*/, LPARAM /*lparam*/)
+		{
+			if (WM_SYSCOLORCHANGE == message)
+				_update_styles();
+			return S_OK;
+		}
+
 		void package::try_initialize()
 		{
-			if (_initialized || !_shell || !_fonts_and_colors)
+			if (_initialized || !_shell || !_shell_ui || !_fonts_and_colors)
 				return;
 			_initialized = true;
+
+			_shell->AdviseBroadcastMessages(this, &_broadcast_cookie);
 
 			LOG(PREAMBLE "initializing wpl support (backbuffer, renderer, text_engine, etc.)...");
 
 			shared_ptr<text_engine_composite> tec(new text_engine_composite);
 			shared_ptr<gcontext::text_engine_type> te(tec, &tec->text_engine);
 
-			_factory = make_shared<factory>(*_shell, make_shared<gcontext::surface_type>(1, 1, 16),
-				make_shared<gcontext::renderer_type>(2), te, create_stylesheet(te));
+			_factory = make_shared<factory>(*_shell_ui,
+				make_shared<gcontext::surface_type>(1, 1, 16),
+				make_shared<gcontext::renderer_type>(2),
+				te,
+				create_stylesheet(_update_styles, *te, *_shell_ui, *_fonts_and_colors));
 
 			LOG(PREAMBLE "entering derived class initialization...");
 

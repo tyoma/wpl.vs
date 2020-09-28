@@ -39,13 +39,15 @@ namespace wpl
 		extern const GUID c_guidGlobalCmdSet;
 
 		class package : public freethreaded< CComObjectRootEx<CComMultiThreadModel> >,
+			public IAsyncLoadablePackageInitialize,
 			public IVsPackage,
-			public IAsyncLoadablePackageInitialize
+			public IVsBroadcastMessageEvents
 		{
 		public:
 			BEGIN_COM_MAP(package)
-				COM_INTERFACE_ENTRY(IVsPackage)
 				COM_INTERFACE_ENTRY(IAsyncLoadablePackageInitialize)
+				COM_INTERFACE_ENTRY(IVsPackage)
+				COM_INTERFACE_ENTRY(IVsBroadcastMessageEvents)
 				COM_INTERFACE_ENTRY_CHAIN(freethreaded_base)
 			END_COM_MAP()
 
@@ -55,25 +57,27 @@ namespace wpl
 			CComPtr<IServiceProvider> get_service_provider() const;
 			CComPtr<_DTE> get_dte() const;
 			CComPtr<IVsUIShell> get_shell() const;
-			CComPtr<IVsFontAndColorStorage> get_fonts_and_colors() const;
 			const factory &get_factory() const;
 
 		private:
-			virtual std::shared_ptr<wpl::stylesheet> create_stylesheet(
-				const std::shared_ptr<gcontext::text_engine_type> &text_engine) const = 0;
+			virtual std::shared_ptr<wpl::stylesheet> create_stylesheet(signal<void ()> &update,
+				gcontext::text_engine_type &text_engine, IVsUIShell &shell,
+				IVsFontAndColorStorage &font_and_color) const = 0;
 			virtual void initialize(factory &factory_) = 0;
 			virtual void terminate() throw() = 0;
 
 		private:
 			STDMETHODIMP Initialize(IAsyncServiceProvider *sp, IProfferAsyncService *, IAsyncProgressCallback *, IVsTask **ppTask);
+
 			STDMETHODIMP SetSite(IServiceProvider *sp);
 			STDMETHODIMP QueryClose(BOOL *can_close);
 			STDMETHODIMP Close();
-
 			STDMETHODIMP GetAutomationObject(LPCOLESTR pszPropName, IDispatch **ppDisp);
 			STDMETHODIMP CreateTool(REFGUID rguidPersistenceSlot);
 			STDMETHODIMP ResetDefaults(VSPKGRESETFLAGS grfFlags);
 			STDMETHODIMP GetPropertyPage(REFGUID rguidPage, VSPROPSHEETPAGE *ppage);
+
+			STDMETHODIMP OnBroadcastMessage(UINT message, WPARAM wparam, LPARAM lparam);
 
 		private:
 			void try_initialize();
@@ -81,9 +85,12 @@ namespace wpl
 		private:
 			CComPtr<IServiceProvider> _service_provider;
 			mutable CComPtr<_DTE> _dte;
-			CComPtr<IVsUIShell> _shell;
+			CComPtr<IVsShell> _shell;
+			CComPtr<IVsUIShell> _shell_ui;
 			CComPtr<IVsFontAndColorStorage> _fonts_and_colors;
+			signal<void ()> _update_styles;
 			std::shared_ptr<factory> _factory;
+			VSCOOKIE _broadcast_cookie;
 			bool _initialized;
 		};
 	}
