@@ -22,7 +22,7 @@
 
 #include "com.h"
 
-#include <dte.h>
+#include <functional>
 #include <vsshell.h>
 #include <vsshell140.h>
 #include <wpl/visual.h>
@@ -52,10 +52,12 @@ namespace wpl
 			END_COM_MAP()
 
 		protected:
-			package();
+			void obtain_service(const GUID &service_guid,
+				const std::function<void (const CComPtr<IUnknown> &service)> &on_ready);
 
-			CComPtr<IServiceProvider> get_service_provider() const;
-			CComPtr<_DTE> get_dte() const;
+			template <typename I>
+			void obtain_service(const std::function<void (const CComPtr<I> &service)> &on_ready);
+
 			CComPtr<IVsUIShell> get_shell() const;
 			const factory &get_factory() const;
 
@@ -67,8 +69,10 @@ namespace wpl
 			virtual void terminate() throw() = 0;
 
 		private:
+			// IAsyncLoadablePackageInitialize methods
 			STDMETHODIMP Initialize(IAsyncServiceProvider *sp, IProfferAsyncService *, IAsyncProgressCallback *, IVsTask **ppTask);
 
+			// IVsPackage methods
 			STDMETHODIMP SetSite(IServiceProvider *sp);
 			STDMETHODIMP QueryClose(BOOL *can_close);
 			STDMETHODIMP Close();
@@ -77,21 +81,28 @@ namespace wpl
 			STDMETHODIMP ResetDefaults(VSPKGRESETFLAGS grfFlags);
 			STDMETHODIMP GetPropertyPage(REFGUID rguidPage, VSPROPSHEETPAGE *ppage);
 
+			// IVsBroadcastMessageEvents methods
 			STDMETHODIMP OnBroadcastMessage(UINT message, WPARAM wparam, LPARAM lparam);
 
 		private:
-			void try_initialize();
+			void obtain_root_services();
+			void initialize();
 
 		private:
 			CComPtr<IServiceProvider> _service_provider;
-			mutable CComPtr<_DTE> _dte;
+			CComPtr<IAsyncServiceProvider> _async_service_provider;
 			CComPtr<IVsShell> _shell;
 			CComPtr<IVsUIShell> _shell_ui;
 			CComPtr<IVsFontAndColorStorage> _fonts_and_colors;
 			signal<void ()> _update_styles;
 			std::shared_ptr<factory> _factory;
 			VSCOOKIE _broadcast_cookie;
-			bool _initialized;
 		};
+
+
+
+		template <typename I>
+		inline void package::obtain_service(const std::function<void (const CComPtr<I> &service)> &on_ready)
+		{	obtain_service(__uuidof(I), [on_ready] (CComPtr<IUnknown> p) {	on_ready(CComQIPtr<I>(p));	});	}
 	}
 }

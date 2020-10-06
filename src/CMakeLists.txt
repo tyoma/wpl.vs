@@ -9,8 +9,8 @@ set(WPL_VS_SOURCES
 	factory.cpp
 	frame.cpp
 	ole-command-target.cpp
+	package.cpp
 	pane.cpp
-	vspackage.cpp
 )
 
 add_library(wpl.vs STATIC ${WPL_VS_SOURCES})

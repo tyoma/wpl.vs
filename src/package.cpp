@@ -21,7 +21,7 @@
 #include <wpl/win32/font_loader.h>
 
 #include <wpl/vs/factory.h>
-#include <wpl/vs/vspackage.h>
+#include <wpl/vs/package.h>
 
 #include "async.h"
 
@@ -48,43 +48,36 @@ namespace wpl
 				win32::font_loader loader;
 				gcontext::text_engine_type text_engine;
 			};
+		}
 
-			template <typename T>
-			CComPtr<IVsTask> obtain_service(IAsyncServiceProvider *sp, const function<void (const CComPtr<T> &p)> &onready,
-				const GUID &serviceid = __uuidof(T))
+
+		void package::obtain_service(const GUID &service_guid,
+			const function<void (const CComPtr<IUnknown> &service)> &on_ready)
+		{
+			if (_async_service_provider)
 			{
 				CComPtr<IVsTask> acquisition;
 
-				if (S_OK != sp->QueryServiceAsync(serviceid, &acquisition))
+				if (S_OK != _async_service_provider->QueryServiceAsync(service_guid, &acquisition))
 				{
 					LOGE(PREAMBLE "failed to obtain a service!");
 					throw runtime_error("Cannot begin acquistion of a service!");
 				}
-				return async::when_complete(acquisition, VSTC_UITHREAD_NORMAL_PRIORITY,
-					[onready] (_variant_t r) -> _variant_t {
+				async::when_complete(acquisition, VSTC_UITHREAD_NORMAL_PRIORITY,
+					[on_ready] (_variant_t r) -> _variant_t {
 
-					r.ChangeType(VT_UNKNOWN);
-					onready(CComQIPtr<T>(r.punkVal));
-					return _variant_t();
+						r.ChangeType(VT_UNKNOWN);
+						on_ready(r.punkVal);
+						return _variant_t();
 				});
 			}
-		}
-
-		package::package()
-			: _broadcast_cookie(0), _initialized(false)
-		{	}
-
-		CComPtr<IServiceProvider> package::get_service_provider() const
-		{	return _service_provider;	}
-
-		CComPtr<_DTE> package::get_dte() const
-		{
-			if (!_dte && _service_provider)
+			else
 			{
-				_service_provider->QueryService(__uuidof(_DTE), &_dte);
-				LOG(PREAMBLE "DTE obtained on demand.") % A(_dte);
+				CComPtr<IUnknown> service;
+
+				_service_provider->QueryService(service_guid, &service);
+				on_ready(service);
 			}
-			return _dte;
 		}
 
 		CComPtr<IVsUIShell> package::get_shell() const
@@ -96,48 +89,42 @@ namespace wpl
 		STDMETHODIMP package::Initialize(IAsyncServiceProvider *sp, IProfferAsyncService *, IAsyncProgressCallback *, IVsTask **ppTask)
 		try
 		{
-			CComPtr<package> self = this;
+			LOG(PREAMBLE "initializing (async)...") % A(sp);
 
-			LOG(PREAMBLE "initializing (async)...");
-			obtain_service<_DTE>(sp, [self] (CComPtr<_DTE> p) {
-				LOG(PREAMBLE "DTE obtained (async)...") % A(p);
-				self->_dte = p;
-			});
-			obtain_service<IVsShell>(sp, [self] (CComPtr<IVsShell> p) {
-				LOG(PREAMBLE "VSShell obtained (async)...") % A(p);
-				self->_shell = p;
-				self->try_initialize();
-			});
-			obtain_service<IVsUIShell>(sp, [self] (CComPtr<IVsUIShell> p) {
-				LOG(PREAMBLE "VsUIShell obtained (async)...") % A(p);
-				self->_shell_ui = p;
-				self->try_initialize();
-			});
-			obtain_service<IVsFontAndColorStorage>(sp, [self] (CComPtr<IVsFontAndColorStorage> p) {
-				LOG(PREAMBLE "FontsAndColors obtained (async)...") % A(p);
-				self->_fonts_and_colors = p;
-				self->try_initialize();
-				});
-			ppTask = NULL;
+			_async_service_provider = sp;
+			*ppTask = NULL;
+			obtain_root_services();
 			return S_OK;
 		}
 		catch (...)
 		{
-			LOGE(PREAMBLE "failed...");
 			return E_FAIL;
 		}
 
 		STDMETHODIMP package::SetSite(IServiceProvider *sp)
 		try
 		{
-			CComPtr<IVsUIShell> shell;
+			CComPtr<IVsShell> shell;
+			CComVariant version;
+
+			if (S_OK != sp->QueryService(__uuidof(IVsShell), &shell) || !shell)
+				return S_OK;
+			if (S_OK == shell->GetProperty(static_cast<VSPROPID>(-9068), &version) && S_OK == version.ChangeType(VT_BSTR))
+			{
+				wstring sversion = version.bstrVal;
+				size_t pos = sversion.find(L'.');
+				float v;
+
+				sversion = sversion.substr(0, pos != wstring::npos ? sversion.find(L'.', pos + 1) : pos);
+				swscanf(sversion.c_str(), L"%f", &v);
+				if (v >= 14.0)
+					return S_OK;
+			}
 
 			LOG(PREAMBLE "initializing (sync)...") % A(sp);
+
 			_service_provider = sp;
-			_service_provider->QueryService(__uuidof(IVsShell), &_shell);
-			_service_provider->QueryService(__uuidof(IVsUIShell), &_shell_ui);
-			_service_provider->QueryService(__uuidof(IVsFontAndColorStorage), &_fonts_and_colors);
-			try_initialize();
+			obtain_root_services();
 			return S_OK;
 		}
 		catch (...)
@@ -159,11 +146,13 @@ namespace wpl
 			LOG(PREAMBLE "... Releasing wpl supporting objects...");
 			_factory.reset();
 			LOG(PREAMBLE "... Releasing VS objects.");
-			_shell->UnadviseBroadcastMessages(_broadcast_cookie);
-			_service_provider.Release();
-			_dte.Release();
-			_shell.Release();
+			_fonts_and_colors.Release();
 			_shell_ui.Release();
+			if (_shell)
+				_shell->UnadviseBroadcastMessages(_broadcast_cookie);
+			_shell.Release();
+			_async_service_provider.Release();
+			_service_provider.Release();
 			LOG(PREAMBLE "... Everything released!");
 			return S_OK;
 		}
@@ -187,13 +176,33 @@ namespace wpl
 			return S_OK;
 		}
 
-		void package::try_initialize()
+		void package::obtain_root_services()
 		{
-			if (_initialized || !_shell || !_shell_ui || !_fonts_and_colors)
-				return;
-			_initialized = true;
+			CComPtr<package> self = this;
 
-			_shell->AdviseBroadcastMessages(this, &_broadcast_cookie);
+			obtain_service<IVsUIShell>([self] (CComPtr<IVsUIShell> p) {
+				LOG(PREAMBLE "VsUIShell obtained...") % A(p);
+				self->_shell_ui = p;
+				if (!!self->_fonts_and_colors)
+					self->initialize();
+			});
+			obtain_service<IVsFontAndColorStorage>([self] (CComPtr<IVsFontAndColorStorage> p) {
+				LOG(PREAMBLE "FontsAndColors obtained...") % A(p);
+				self->_fonts_and_colors = p;
+				if (!!self->_shell_ui)
+					self->initialize();
+			});
+		}
+
+		void package::initialize()
+		{
+			CComPtr<package> self = this;
+
+			obtain_service<IVsShell>([self] (CComPtr<IVsShell> p) {
+				LOG(PREAMBLE "VsShell obtained...") % A(p);
+				self->_shell = p;
+				p->AdviseBroadcastMessages(&*self, &self->_broadcast_cookie);
+			});
 
 			LOG(PREAMBLE "initializing wpl support (backbuffer, renderer, text_engine, etc.)...");
 

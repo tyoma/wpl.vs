@@ -48,7 +48,7 @@
     <ClInclude Include="..\wpl\vs\factory.h" />
     <ClInclude Include="..\wpl\vs\ole-command-target.h" />
     <ClInclude Include="..\wpl\vs\pane.h" />
-    <ClInclude Include="..\wpl\vs\vspackage.h" />
+    <ClInclude Include="..\wpl\vs\package.h" />
     <ClInclude Include="async.h" />
     <ClInclude Include="CComObjectEx.h" />
     <ClInclude Include="frame.h" />
@@ -59,7 +59,7 @@
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="frame.cpp" />
     <ClCompile Include="ole-command-target.cpp" />
-    <ClCompile Include="vspackage.cpp" />
+    <ClCompile Include="package.cpp" />
     <ClCompile Include="pane.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

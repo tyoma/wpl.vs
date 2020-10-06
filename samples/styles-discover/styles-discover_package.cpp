@@ -15,7 +15,7 @@
 #include <wpl/vs/factory.h>
 #include <wpl/vs/ole-command-target.h>
 #include <wpl/vs/pane.h>
-#include <wpl/vs/vspackage.h>
+#include <wpl/vs/package.h>
 
 using namespace agge;
 using namespace std;
