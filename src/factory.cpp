@@ -46,20 +46,13 @@ namespace wpl
 			}
 		}
 
-		factory::factory(IVsUIShell &shell, const shared_ptr<gcontext::surface_type> &backbuffer,
-				const shared_ptr<gcontext::renderer_type> &renderer,
-				const shared_ptr<gcontext::text_engine_type> &text_engine,
-				const shared_ptr<stylesheet> &stylesheet_)
-			: wpl::factory(backbuffer, renderer, text_engine, stylesheet_), _shell(shell), _backbuffer(backbuffer),
-				_renderer(renderer), _text_engine(text_engine), _stylesheet(stylesheet_)
+		factory::factory(const factory_context &context, IVsUIShell &shell)
+			: wpl::factory(context), _context(context), _shell(shell)
 		{
 			setup_default(*this);
-			register_form([this] (const shared_ptr<gcontext::surface_type> &backbuffer,
-				const shared_ptr<gcontext::renderer_type> &renderer,
-				const shared_ptr<gcontext::text_engine_type> &text_engine,
-				const shared_ptr<stylesheet> &/*stylesheet_*/) {
-
-				return shared_ptr<form>(new win32::form(backbuffer, renderer, text_engine, get_frame_hwnd(_shell)));
+			register_form([this] (const form_context &context) {
+				return shared_ptr<form>(new win32::form(context.backbuffer, context.renderer, context.text_engine,
+					get_frame_hwnd(_shell)));
 			});
 
 			_shell.AddRef();
@@ -78,10 +71,10 @@ namespace wpl
 			CComPtr<IVsWindowPane> sp(pane_object);
 			CComPtr<IVsWindowFrame> frame_;
 
-			pane_object->backbuffer = _backbuffer;
-			pane_object->renderer = _renderer;
-			pane_object->text_engine = _text_engine;
-			pane_object->stylesheet_ = _stylesheet;
+			pane_object->backbuffer = _context.backbuffer;
+			pane_object->renderer = _context.renderer;
+			pane_object->text_engine = _context.text_engine;
+			pane_object->stylesheet_ = _context.stylesheet_;
 			LOG(PREAMBLE "creating VS pane window...") % A(pane_object) % A(_next_tool_id);
 			if (S_OK == _shell.CreateToolWindow(CTW_fMultiInstance | CTW_fToolbarHost, _next_tool_id++, sp, GUID_NULL, c_settingsSlot,
 				GUID_NULL, NULL, L"", NULL, &frame_) && frame_)

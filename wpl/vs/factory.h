@@ -34,21 +34,15 @@ namespace wpl
 		class factory : public wpl::factory
 		{
 		public:
-			factory(IVsUIShell &shell, const std::shared_ptr<gcontext::surface_type> &backbuffer,
-				const std::shared_ptr<gcontext::renderer_type> &renderer,
-				const std::shared_ptr<gcontext::text_engine_type> &text_engine,
-				const std::shared_ptr<stylesheet> &stylesheet_);
+			factory(const factory_context &context, IVsUIShell &shell);
 			~factory();
 
 			std::shared_ptr<pane> create_pane(const GUID &menu_group_id, int menu_id) const;
 			std::shared_ptr<form> create_modal() const;
 
 		private:
+			const factory_context _context;
 			IVsUIShell &_shell;
-			const std::shared_ptr<gcontext::surface_type> _backbuffer;
-			const std::shared_ptr<gcontext::renderer_type> _renderer;
-			const std::shared_ptr<gcontext::text_engine_type> _text_engine;
-			const std::shared_ptr<stylesheet> _stylesheet;
 			mutable unsigned _next_tool_id;
 		};
 	}

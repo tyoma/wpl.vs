@@ -19,6 +19,7 @@
 //	THE SOFTWARE.
 
 #include <wpl/win32/font_loader.h>
+#include <wpl/win32/queue.h>
 
 #include <wpl/vs/factory.h>
 #include <wpl/vs/package.h>
@@ -208,12 +209,16 @@ namespace wpl
 
 			shared_ptr<text_engine_composite> tec(new text_engine_composite);
 			shared_ptr<gcontext::text_engine_type> te(tec, &tec->text_engine);
-
-			_factory = make_shared<factory>(*_shell_ui,
+			factory_context context = {
 				make_shared<gcontext::surface_type>(1, 1, 16),
 				make_shared<gcontext::renderer_type>(2),
 				te,
-				create_stylesheet(_update_styles, *te, *_shell_ui, *_fonts_and_colors));
+				create_stylesheet(_update_styles, *te, *_shell_ui, *_fonts_and_colors),
+				win32::clock,
+				win32::queue(),
+			};
+
+			_factory = make_shared<factory>(context, *_shell_ui);
 
 			LOG(PREAMBLE "entering derived class initialization...");
 
