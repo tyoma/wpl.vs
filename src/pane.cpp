@@ -43,8 +43,8 @@ namespace wpl
 		STDMETHODIMP pane_impl::CreatePaneWindow(HWND hparent, int, int, int, int, HWND *)
 		{
 			LOG(PREAMBLE "CreatePaneWindow called. Constructing view_host...") % A(this);
-			host.reset(new win32::view_host(hparent, backbuffer, renderer, text_engine));
-			host->set_background_color(stylesheet_->get_color("background"));
+			host.reset(new win32::view_host(hparent, context));
+			host->set_background_color(context.stylesheet_->get_color("background"));
 			LOG(PREAMBLE "...view_host constructed.") % A(host.get());
 			return S_OK;
 		}

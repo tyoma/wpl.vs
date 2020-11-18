@@ -18,6 +18,7 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 
+#include <wpl/win32/cursor_manager.h>
 #include <wpl/win32/font_loader.h>
 #include <wpl/win32/queue.h>
 
@@ -214,6 +215,7 @@ namespace wpl
 				make_shared<gcontext::renderer_type>(2),
 				te,
 				create_stylesheet(_update_styles, *te, *_shell_ui, *_fonts_and_colors),
+				make_shared<win32::cursor_manager>(),
 				win32::clock,
 				win32::queue(),
 			};

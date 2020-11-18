@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <vsshell.h>
+#include <wpl/factory_context.h>
 #include <wpl/form.h>
 #include <wpl/visual.h>
 #include <wpl/vs/ole-command-target.h>
@@ -43,11 +44,7 @@ namespace wpl
 			~pane_impl();
 
 		public:
-			std::shared_ptr<gcontext::surface_type> backbuffer;
-			std::shared_ptr<gcontext::renderer_type> renderer;
-			std::shared_ptr<gcontext::text_engine_type> text_engine;
-			std::shared_ptr<stylesheet> stylesheet_;
-
+			form_context context;
 			std::shared_ptr<wpl::view_host> host;
 
 		private:
