@@ -42,8 +42,7 @@ namespace wpl
 			~frame();
 
 		private:
-			virtual void set_view(const std::shared_ptr<wpl::view> &v);
-			virtual void set_background_color(agge::color color_);
+			virtual void set_view(std::shared_ptr<wpl::view> v);
 
 			virtual view_location get_location() const;
 			virtual void set_location(const view_location &location);
@@ -52,8 +51,7 @@ namespace wpl
 			virtual void set_caption_icon(const gcontext::surface_type &icon);
 			virtual void set_task_icon(const gcontext::surface_type &icon);
 			virtual std::shared_ptr<form> create_child();
-			virtual void set_style(unsigned /*styles*/ style);
-			virtual void set_font(const font &font_);
+			virtual void set_features(unsigned /*styles*/ features);
 
 			virtual void add_command(int id, const execute_fn &execute, bool is_group, const query_state_fn &query_state,
 				const get_name_fn &get_name);

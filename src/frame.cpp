@@ -99,11 +99,8 @@ namespace wpl
 				_underlying2->Unadvise(_advise_cookie);
 		}
 
-		void frame::set_view(const shared_ptr<wpl::view> &v)
+		void frame::set_view(shared_ptr<wpl::view> v)
 		{	_pane.host->set_view(v);	}
-
-		void frame::set_background_color(agge::color color)
-		{	_pane.host->set_background_color(color);	}
 
 		view_location frame::get_location() const
 		{	throw 0;	}
@@ -126,10 +123,7 @@ namespace wpl
 		shared_ptr<form> frame::create_child()
 		{	throw 0;	}
 
-		void frame::set_style(unsigned /*styles*/)
-		{	throw 0;	}
-
-		void frame::set_font(const font &)
+		void frame::set_features(unsigned /*styles*/)
 		{	throw 0;	}
 
 		void frame::add_command(int id, const execute_fn &execute, bool is_group, const query_state_fn &query_state,

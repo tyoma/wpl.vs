@@ -11,7 +11,10 @@
 #include <stdexcept>
 #include <wpl/controls/listview_basic.h>
 #include <wpl/controls/listview_composite.h>
-#include <wpl/stylesheet.h>
+#include <wpl/layout.h>
+#include <wpl/root_container.h>
+#include <wpl/stylesheet_db.h>
+#include <wpl/stylesheet_helpers.h>
 #include <wpl/vs/factory.h>
 #include <wpl/vs/ole-command-target.h>
 #include <wpl/vs/pane.h>
@@ -147,8 +150,8 @@ private:
 
 	virtual void initialize(vs::factory &factory_)
 	{
-		factory_.register_control("styleview", [] (const factory &f, const shared_ptr<stylesheet> &ss) {
-			return controls::create_listview<styleview>(f, ss);
+		factory_.register_control("styleview", [] (const factory &f, const control_context &context) {
+			return controls::create_listview<styleview>(f, context);
 		});
 
 		add_command(cmdidShowStyles, [this, &factory_] (unsigned) {
@@ -157,11 +160,18 @@ private:
 
 			_active_pane->set_caption(L"VS Styles");
 
+			auto root = apply_stylesheet(make_shared<root_container>(factory_.context.cursor_manager_),
+				*factory_.context.stylesheet_);
+			auto root_layout = make_shared<stack>(0, false);
 			auto sv = static_pointer_cast<styleview>(factory_.create_control("styleview"));
+
+			root->set_layout(root_layout);
 
 			sv->set_model(make_shared<styles_model>(CComQIPtr<IVsUIShell2>(get_shell())));
 			sv->set_columns_model(make_shared<styles_columns_model>());
-			_active_pane->set_view(sv->get_view());
+			root_layout->add(-100);
+			root->add_view(sv->get_view());
+			_active_pane->set_view(root);
 			_active_pane->set_visible(true);
 			_close_conn = _active_pane->close += [&active_pane] { active_pane.reset(); };
 		}, false, [this] (unsigned, unsigned &state) -> bool {
