@@ -12,7 +12,6 @@
 #include <wpl/controls/listview_basic.h>
 #include <wpl/controls/listview_composite.h>
 #include <wpl/layout.h>
-#include <wpl/root_container.h>
 #include <wpl/stylesheet_db.h>
 #include <wpl/stylesheet_helpers.h>
 #include <wpl/vs/factory.h>
@@ -67,9 +66,15 @@ namespace
 	class styleview : public controls::listview_basic
 	{
 	public:
-		styleview(const shared_ptr<stylesheet> &stylesheet_)
-			: controls::listview_basic(stylesheet_), _stylesheet(*stylesheet_)
+		styleview()
 		{	}
+
+		void apply_styles(const stylesheet &ss)
+		{
+			listview_basic::apply_styles(ss);
+			_padding = ss.get_value("padding.listview");
+			_border = ss.get_value("border");
+		}
 
 		void set_model(shared_ptr<styles_model> m)
 		{
@@ -85,11 +90,10 @@ namespace
 			{
 				if (_model)
 				{
-					const auto p = _stylesheet.get_value("padding.listview");
 					auto b = box;
 
-					inflate(b, -p, -p);
-					add_path(*rasterizer_, rectangle(b.x1, b.y1 + _stylesheet.get_value("border"), b.x2, b.y2));
+					inflate(b, -_padding, -_padding);
+					add_path(*rasterizer_, rectangle(b.x1, b.y1 + _border, b.x2, b.y2));
 					ctx(rasterizer_, blender(_model->get_color(item)), winding<>());
 				}
 			}
@@ -100,7 +104,7 @@ namespace
 		}
 
 	private:
-		stylesheet &_stylesheet;
+		real_t _padding, _border;
 		shared_ptr<styles_model> _model;
 	};
 }
@@ -151,7 +155,7 @@ private:
 	virtual void initialize(vs::factory &factory_)
 	{
 		factory_.register_control("styleview", [] (const factory &f, const control_context &context) {
-			return controls::create_listview<styleview>(f, context);
+			return apply_stylesheet(make_shared< wpl::controls::listview_composite<styleview> >(f, context), *context.stylesheet_);
 		});
 
 		add_command(cmdidShowStyles, [this, &factory_] (unsigned) {
@@ -160,18 +164,15 @@ private:
 
 			_active_pane->set_caption(L"VS Styles");
 
-			auto root = apply_stylesheet(make_shared<root_container>(factory_.context.cursor_manager_),
-				*factory_.context.stylesheet_);
-			auto root_layout = make_shared<stack>(0, false);
-			auto sv = static_pointer_cast<styleview>(factory_.create_control("styleview"));
+			const auto root = make_shared<overlay>();
+				root->add(factory_.create_control<control>("background"));
 
-			root->set_layout(root_layout);
+				const auto sv = factory_.create_control<styleview>("styleview");
+				root->add(sv);
+					sv->set_model(make_shared<styles_model>(CComQIPtr<IVsUIShell2>(get_shell())));
+					sv->set_columns_model(make_shared<styles_columns_model>());
 
-			sv->set_model(make_shared<styles_model>(CComQIPtr<IVsUIShell2>(get_shell())));
-			sv->set_columns_model(make_shared<styles_columns_model>());
-			root_layout->add(-100);
-			root->add_view(sv->get_view());
-			_active_pane->set_view(root);
+			_active_pane->set_root(root);
 			_active_pane->set_visible(true);
 			_close_conn = _active_pane->close += [&active_pane] { active_pane.reset(); };
 		}, false, [this] (unsigned, unsigned &state) -> bool {

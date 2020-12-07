@@ -42,7 +42,7 @@ namespace wpl
 			~frame();
 
 		private:
-			virtual void set_view(std::shared_ptr<wpl::view> v);
+			virtual void set_root(std::shared_ptr<wpl::control> root);
 
 			virtual view_location get_location() const;
 			virtual void set_location(const view_location &location);

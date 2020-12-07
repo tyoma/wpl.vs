@@ -99,8 +99,8 @@ namespace wpl
 				_underlying2->Unadvise(_advise_cookie);
 		}
 
-		void frame::set_view(shared_ptr<wpl::view> v)
-		{	_pane.host->set_view(v);	}
+		void frame::set_root(shared_ptr<wpl::control> root)
+		{	_pane.host->set_root(root);	}
 
 		view_location frame::get_location() const
 		{	throw 0;	}
