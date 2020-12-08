@@ -1,8 +1,15 @@
+#include <crtdbg.h>
+
 #include <atlbase.h>
 
 namespace
 {
-	class Module : public CAtlDllModuleT<Module> { } g_module;
+	class Module : public CAtlDllModuleT<Module>
+	{
+	public:
+		Module()
+		{	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	}
+	} g_module;
 }
 
 STDAPI DllCanUnloadNow()
