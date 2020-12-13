@@ -44,6 +44,7 @@ namespace wpl
 		{
 			LOG(PREAMBLE "CreatePaneWindow called. Constructing view_host...") % A(this);
 			host.reset(new win32::view_host(hparent, context));
+			::SetClassLongPtr(hparent, GCL_STYLE, CS_DBLCLKS | ::GetClassLongPtr(hparent, GCL_STYLE));
 			LOG(PREAMBLE "...view_host constructed.") % A(host.get());
 			return S_OK;
 		}
