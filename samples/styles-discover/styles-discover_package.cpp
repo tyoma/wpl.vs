@@ -148,7 +148,7 @@ private:
 		ss->set_value("border", 1.0f);
 		ss->set_value("padding", 3.0f);
 
-		ss->set_font("text", text_engine.create_font(L"Segoe UI", 20, false, false, agge::font::key::gf_vertical));
+		ss->set_font("text", text_engine.create_font(L"Segoe UI", 14, false, false, agge::font::key::gf_vertical));
 		return ss;
 	}
 

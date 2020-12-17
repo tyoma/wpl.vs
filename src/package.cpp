@@ -18,18 +18,18 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 
-#include <wpl/win32/cursor_manager.h>
-#include <wpl/win32/font_loader.h>
-#include <wpl/win32/queue.h>
-
-#include <wpl/vs/factory.h>
 #include <wpl/vs/package.h>
 
 #include "async.h"
 
+#include <wpl/vs/factory.h>
+
 #include <functional>
 #include <logger/log.h>
 #include <stdexcept>
+#include <wpl/freetype2/font_loader.h>
+#include <wpl/win32/cursor_manager.h>
+#include <wpl/win32/queue.h>
 
 #define PREAMBLE "Generic VS Package: "
 
@@ -39,20 +39,6 @@ namespace wpl
 {
 	namespace vs
 	{
-		namespace
-		{
-			struct text_engine_composite : noncopyable
-			{
-				text_engine_composite()
-					: text_engine(loader, 4)
-				{	}
-
-				win32::font_loader loader;
-				gcontext::text_engine_type text_engine;
-			};
-		}
-
-
 		void package::obtain_service(const GUID &service_guid,
 			const function<void (const CComPtr<IUnknown> &service)> &on_ready)
 		{
@@ -208,13 +194,12 @@ namespace wpl
 
 			LOG(PREAMBLE "initializing wpl support (backbuffer, renderer, text_engine, etc.)...");
 
-			shared_ptr<text_engine_composite> tec(new text_engine_composite);
-			shared_ptr<gcontext::text_engine_type> te(tec, &tec->text_engine);
+			const auto tex_engine = create_text_engine();
 			factory_context context = {
 				make_shared<gcontext::surface_type>(1, 1, 16),
 				make_shared<gcontext::renderer_type>(2),
-				te,
-				create_stylesheet(_update_styles, *te, *_shell_ui, *_fonts_and_colors),
+				tex_engine,
+				create_stylesheet(_update_styles, *tex_engine, *_shell_ui, *_fonts_and_colors),
 				make_shared<win32::cursor_manager>(),
 				win32::clock,
 				win32::queue(),
