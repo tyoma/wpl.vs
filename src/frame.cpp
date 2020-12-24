@@ -102,10 +102,10 @@ namespace wpl
 		void frame::set_root(shared_ptr<wpl::control> root)
 		{	_pane.host->set_root(root);	}
 
-		view_location frame::get_location() const
+		rect_i frame::get_location() const
 		{	throw 0;	}
 
-		void frame::set_location(const view_location &)
+		void frame::set_location(const rect_i &)
 		{	throw 0;	}
 
 		void frame::set_visible(bool value)

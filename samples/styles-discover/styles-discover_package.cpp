@@ -30,9 +30,6 @@ namespace
 {
 	typedef blender_solid_color<simd::blender_solid_color, order_bgra> blender;
 
-	void inflate(rect_r &r, real_t dx, real_t dy)
-	{	r.x1 -= dx, r.x2 += dx, r.y1 -= dy, r.y2 += dy;	}
-
 	shared_ptr<agge::font> create(gcontext::text_engine_type &text_engine, const LOGFONTW &native_font)
 	{
 		return text_engine.create_font(native_font.lfFaceName, native_font.lfHeight, native_font.lfWeight > FW_NORMAL,
@@ -83,7 +80,7 @@ namespace
 		}
 
 		virtual void draw_subitem(wpl::gcontext &ctx, wpl::gcontext::rasterizer_ptr &rasterizer_,
-			const rect_r &box, index_type item, unsigned state, wpl::columns_model::index_type subitem,
+			const wpl::rect_r &box, index_type item, unsigned state, wpl::columns_model::index_type subitem,
 			const std::wstring &text) const
 		{
 			if (subitem == 1)
@@ -138,6 +135,7 @@ private:
 		ss->set_color("text", get_system_color(COLOR_BTNTEXT));
 		ss->set_color("text.selected", get_system_color(COLOR_HIGHLIGHTTEXT));
 		ss->set_color("border", semi(get_system_color(COLOR_3DSHADOW), 0.3));
+		ss->set_color("separator", semi(get_system_color(COLOR_3DSHADOW), 0.3));
 
 		ss->set_color("background.listview.even", color::make(0, 0, 0, 0));
 		ss->set_color("background.listview.odd", semi(invert(background), 0.02));
@@ -147,6 +145,7 @@ private:
 
 		ss->set_value("border", 1.0f);
 		ss->set_value("padding", 3.0f);
+		ss->set_value("separator", 1.0f);
 
 		ss->set_font("text", text_engine.create_font(L"Segoe UI", 14, false, false, agge::font::key::gf_vertical));
 		return ss;

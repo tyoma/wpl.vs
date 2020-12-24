@@ -44,8 +44,8 @@ namespace wpl
 		private:
 			virtual void set_root(std::shared_ptr<wpl::control> root);
 
-			virtual view_location get_location() const;
-			virtual void set_location(const view_location &location);
+			virtual rect_i get_location() const;
+			virtual void set_location(const rect_i &location);
 			virtual void set_visible(bool value);
 			virtual void set_caption(const std::wstring &caption);
 			virtual void set_caption_icon(const gcontext::surface_type &icon);
