@@ -11,7 +11,7 @@ class styles_columns_model : public wpl::columns_model
 	virtual void get_value(index_type index, short &value) const;
 	virtual std::pair<index_type, bool> get_sort_order() const throw();
 	virtual void update_column(index_type index, short width);
-	virtual void get_column(index_type index, column &column) const;
+	virtual void get_caption(index_type index, agge::richtext_t &caption) const;
 	virtual void activate_column(index_type column);
 };
 

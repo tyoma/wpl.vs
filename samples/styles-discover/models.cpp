@@ -13,10 +13,14 @@ short styles_columns_model::get_count() const throw()
 
 void styles_columns_model::get_value(index_type index, short &value) const
 {
-	column c;
-
-	get_column(index, c);
-	value = c.width;
+	switch (index)
+	{
+	case 0: value = 60; break;
+	case 1: value = 80; break;
+	case 2: value = 50; break;
+	case 3: value = 50; break;
+	case 4: value = 50; break;
+	}
 }
 
 pair<styles_columns_model::index_type, bool> styles_columns_model::get_sort_order() const throw()
@@ -25,15 +29,15 @@ pair<styles_columns_model::index_type, bool> styles_columns_model::get_sort_orde
 void styles_columns_model::update_column(index_type /*index*/, short /*width*/)
 {	}
 
-void styles_columns_model::get_column(index_type index, column &c) const
+void styles_columns_model::get_caption(index_type index, agge::richtext_t &caption) const
 {
 	switch (index)
 	{
-	case 0: c = column(L"Code", 60); break;
-	case 1: c = column(L"Color", 80); break;
-	case 2: c = column(L"Red", 50); break;
-	case 3: c = column(L"Green", 50); break;
-	case 4: c = column(L"Blue", 50); break;
+	case 0: caption += L"Code"; break;
+	case 1: caption += L"Color"; break;
+	case 2: caption += L"Red"; break;
+	case 3: caption += L"Green"; break;
+	case 4: caption += L"Blue"; break;
 	}
 }
 

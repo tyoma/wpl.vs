@@ -30,18 +30,18 @@ namespace
 {
 	typedef blender_solid_color<simd::blender_solid_color, order_bgra> blender;
 
-	shared_ptr<agge::font> create(gcontext::text_engine_type &text_engine, const LOGFONTW &native_font)
+	shared_ptr<font> create(gcontext::text_engine_type &text_engine, const LOGFONTA &native_font)
 	{
-		return text_engine.create_font(native_font.lfFaceName, native_font.lfHeight, native_font.lfWeight > FW_NORMAL,
-			!!native_font.lfItalic, agge::font::key::gf_vertical);
+		return text_engine.create_font(font_descriptor::create(native_font.lfFaceName, native_font.lfHeight,
+			native_font.lfWeight > FW_NORMAL, !!native_font.lfItalic, hint_vertical));
 	}
 
-	shared_ptr<agge::font> get_system_font(gcontext::text_engine_type &text_engine)
+	shared_ptr<font> get_system_font(gcontext::text_engine_type &text_engine)
 	{
-		NONCLIENTMETRICSW m = {};
+		NONCLIENTMETRICSA m = {};
 
 		m.cbSize = sizeof(m);
-		if (::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &m, 0))
+		if (::SystemParametersInfoA(SPI_GETNONCLIENTMETRICS, 0, &m, 0))
 			return create(text_engine, m.lfMenuFont);
 		throw runtime_error("Cannot retrieve system font!");
 	}
@@ -147,7 +147,8 @@ private:
 		ss->set_value("padding", 3.0f);
 		ss->set_value("separator", 1.0f);
 
-		ss->set_font("text", text_engine.create_font(L"Segoe UI", 14, false, false, agge::font::key::gf_vertical));
+		ss->set_font("text", text_engine.create_font(font_descriptor::create("Segoe UI", 14, false, false,
+			hint_vertical)));
 		return ss;
 	}
 
