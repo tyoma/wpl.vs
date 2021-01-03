@@ -33,7 +33,7 @@ namespace
 	shared_ptr<font> create(gcontext::text_engine_type &text_engine, const LOGFONTA &native_font)
 	{
 		return text_engine.create_font(font_descriptor::create(native_font.lfFaceName, native_font.lfHeight,
-			native_font.lfWeight > FW_NORMAL, !!native_font.lfItalic, hint_vertical));
+			native_font.lfWeight >= FW_BOLD ? bold : regular, !!native_font.lfItalic, hint_vertical));
 	}
 
 	shared_ptr<font> get_system_font(gcontext::text_engine_type &text_engine)
@@ -147,7 +147,7 @@ private:
 		ss->set_value("padding", 3.0f);
 		ss->set_value("separator", 1.0f);
 
-		ss->set_font("text", text_engine.create_font(font_descriptor::create("Segoe UI", 14, false, false,
+		ss->set_font("text", text_engine.create_font(font_descriptor::create("Segoe UI", 14, regular, false,
 			hint_vertical)));
 		return ss;
 	}
