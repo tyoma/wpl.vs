@@ -33,11 +33,11 @@ void styles_columns_model::get_caption(index_type index, agge::richtext_t &capti
 {
 	switch (index)
 	{
-	case 0: caption += L"Code"; break;
-	case 1: caption += L"Color"; break;
-	case 2: caption += L"Red"; break;
-	case 3: caption += L"Green"; break;
-	case 4: caption += L"Blue"; break;
+	case 0: caption.append(L"Code"); break;
+	case 1: caption.append(L"Color"); break;
+	case 2: caption.append(L"Red"); break;
+	case 3: caption.append(L"Green"); break;
+	case 4: caption.append(L"Blue"); break;
 	}
 }
 
