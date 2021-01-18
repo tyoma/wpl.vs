@@ -8,7 +8,9 @@
 #include <agge/figures.h>
 #include <agge/filling_rules.h>
 #include <atlbase.h>
+#include <samples/common/simple_queue.h>
 #include <stdexcept>
+#include <time.h>
 #include <wpl/controls/listview_basic.h>
 #include <wpl/controls/listview_composite.h>
 #include <wpl/layout.h>
@@ -125,8 +127,17 @@ public:
 	END_COM_MAP()
 
 private:
+	virtual wpl::clock get_clock() const override
+	{	return [] {	return ::clock();	};	}
+
+	virtual wpl::queue initialize_queue() override
+	{
+		const auto q = make_shared<simple_queue>();
+		return [q] (const queue_task &task, timespan defer_by) {	return q->schedule(task, defer_by);	};
+	}
+
 	virtual std::shared_ptr<stylesheet> create_stylesheet(signal<void ()> &, gcontext::text_engine_type &text_engine,
-		IVsUIShell &/*shell*/, IVsFontAndColorStorage &/*font_and_color*/) const
+		IVsUIShell &/*shell*/, IVsFontAndColorStorage &/*font_and_color*/) const override
 	{
 		const auto ss = make_shared<stylesheet_db>();
 		const auto background = get_system_color(COLOR_BTNFACE);
@@ -152,7 +163,7 @@ private:
 		return ss;
 	}
 
-	virtual void initialize(vs::factory &factory_)
+	virtual void initialize(vs::factory &factory_) override
 	{
 		factory_.register_control("styleview", [] (const factory &f, const control_context &context) {
 			return apply_stylesheet(make_shared< wpl::controls::listview_composite<styleview> >(f, context), *context.stylesheet_);
@@ -181,10 +192,8 @@ private:
 		});
 	}
 
-	virtual void terminate() throw()
-	{
-		_active_pane.reset();
-	}
+	virtual void terminate() throw() override
+	{	_active_pane.reset();	}
 
 private:
 	slot_connection _close_conn;

@@ -25,6 +25,7 @@
 #include <functional>
 #include <vsshell.h>
 #include <vsshell140.h>
+#include <wpl/queue.h>
 #include <wpl/visual.h>
 
 namespace wpl
@@ -62,8 +63,10 @@ namespace wpl
 			const factory &get_factory() const;
 
 		private:
+			virtual wpl::clock get_clock() const = 0;
+			virtual wpl::queue initialize_queue() = 0;
 			virtual std::shared_ptr<wpl::stylesheet> create_stylesheet(signal<void ()> &update,
-				gcontext::text_engine_type &text_engine, IVsUIShell &shell,
+				gcontext::text_engine_type &text_services, IVsUIShell &shell,
 				IVsFontAndColorStorage &font_and_color) const = 0;
 			virtual void initialize(factory &factory_) = 0;
 			virtual void terminate() throw() = 0;

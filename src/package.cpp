@@ -29,7 +29,6 @@
 #include <stdexcept>
 #include <wpl/freetype2/font_loader.h>
 #include <wpl/win32/cursor_manager.h>
-#include <wpl/win32/queue.h>
 
 #define PREAMBLE "Generic VS Package: "
 
@@ -194,15 +193,15 @@ namespace wpl
 
 			LOG(PREAMBLE "initializing wpl support (backbuffer, renderer, text_engine, etc.)...");
 
-			const auto tex_engine = create_text_engine();
+			const auto text_engine = create_text_engine();
 			factory_context context = {
 				make_shared<gcontext::surface_type>(1, 1, 16),
 				make_shared<gcontext::renderer_type>(2),
-				tex_engine,
-				create_stylesheet(_update_styles, *tex_engine, *_shell_ui, *_fonts_and_colors),
+				text_engine,
+				create_stylesheet(_update_styles, *text_engine, *_shell_ui, *_fonts_and_colors),
 				make_shared<win32::cursor_manager>(),
-				win32::clock,
-				win32::queue(),
+				get_clock(),
+				initialize_queue(),
 			};
 
 			_factory = make_shared<factory>(context, *_shell_ui);

@@ -30,6 +30,7 @@
     <Import Project="$(SolutionDir)build.props\config.props" />
     <Import Project="$(SolutionDir)build.props\vssdk.props" />
     <Import Project="$(SolutionDir)build.props\agge.include.props" />
+    <Import Project="$(SolutionDir)build.props\freetype.include.props" />
     <Import Project="$(SolutionDir)build.props\wpl.include.props" />
   </ImportGroup>
   <ItemDefinitionGroup>
@@ -71,6 +72,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\libraries\wpl\samples\common\src\samples-common.vcxproj">
+      <Project>{0939ee39-a722-3638-385b-c3656b191b84}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\wpl.vs.vcxproj">
       <Project>{120FA1C6-37AA-42CE-B922-346BF91EEC0F}</Project>
     </ProjectReference>
