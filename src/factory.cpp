@@ -70,7 +70,7 @@ namespace wpl
 			CComPtr<IVsWindowPane> sp(pane_object);
 			CComPtr<IVsWindowFrame> frame_;
 
-			pane_object->context = _context;
+			pane_object->set_context(_context);
 			LOG(PREAMBLE "creating VS pane window...") % A(pane_object) % A(_next_tool_id);
 			if (S_OK == _shell.CreateToolWindow(CTW_fMultiInstance | CTW_fToolbarHost, _next_tool_id++, sp, GUID_NULL, c_settingsSlot,
 				GUID_NULL, NULL, L"", NULL, &frame_) && frame_)

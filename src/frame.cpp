@@ -100,7 +100,7 @@ namespace wpl
 		}
 
 		void frame::set_root(shared_ptr<wpl::control> root)
-		{	_pane.host->set_root(root);	}
+		{	_pane.set_root(root);	}
 
 		rect_i frame::get_location() const
 		{	throw 0;	}

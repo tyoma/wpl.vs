@@ -43,9 +43,8 @@ namespace wpl
 			pane_impl(const GUID &menu_group_id);
 			~pane_impl();
 
-		public:
-			form_context context;
-			std::shared_ptr<wpl::view_host> host;
+			void set_context(const form_context &context);
+			void set_root(std::shared_ptr<control> root);
 
 		private:
 			BEGIN_COM_MAP(pane_impl)
@@ -62,6 +61,10 @@ namespace wpl
 			virtual STDMETHODIMP LoadViewState(IStream *stream);
 			virtual STDMETHODIMP SaveViewState(IStream *stream);
 			virtual STDMETHODIMP TranslateAccelerator(MSG *msg);
+
+		private:
+			form_context _context;
+			std::shared_ptr<wpl::view_host> _host;
 		};
 	}
 }

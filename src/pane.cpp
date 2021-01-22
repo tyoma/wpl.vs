@@ -37,15 +37,26 @@ namespace wpl
 		pane_impl::~pane_impl()
 		{	LOG(PREAMBLE "destroyed...") % A(this);	}
 
+		void pane_impl::set_context(const form_context &context)
+		{	_context = context;	}
+
+		void pane_impl::set_root(std::shared_ptr<control> root)
+		{
+			if (_host)
+				_host->set_root(root);
+			else
+				LOG(PREAMBLE "set_root called for a missing host. Ignoring...") % A(this);
+		}
+
 		STDMETHODIMP pane_impl::SetSite(IServiceProvider * /*site*/)
 		{	return S_OK;	}
 
 		STDMETHODIMP pane_impl::CreatePaneWindow(HWND hparent, int, int, int, int, HWND *)
 		{
-			LOG(PREAMBLE "CreatePaneWindow called. Constructing view_host...") % A(this);
-			host.reset(new win32::view_host(hparent, context));
+			LOG(PREAMBLE "CreatePaneWindow called. Constructing view_host...") % A(this) % A(hparent);
+			_host.reset(new win32::view_host(hparent, _context));
 			::SetClassLongPtr(hparent, GCL_STYLE, CS_DBLCLKS | ::GetClassLongPtr(hparent, GCL_STYLE));
-			LOG(PREAMBLE "...view_host constructed.") % A(host.get());
+			LOG(PREAMBLE "...view_host constructed.") % A(_host.get());
 			return S_OK;
 		}
 
@@ -54,7 +65,8 @@ namespace wpl
 
 		STDMETHODIMP pane_impl::ClosePane()
 		{
-			LOG(PREAMBLE "ClosePane called. Releasing...") % A(this);
+			LOG(PREAMBLE "ClosePane called. Releasing host...") % A(this);
+			_host.reset();
 			return S_OK;
 		}
 
