@@ -33,7 +33,7 @@ namespace wpl
 
 			typedef std::function<void (unsigned item)> execute_fn;
 			typedef std::function<bool (unsigned item, unsigned /*state_flags*/ &state)> query_state_fn;
-			typedef std::function<bool (unsigned item, std::wstring &name)> get_name_fn;
+			typedef std::function<bool (unsigned item, std::string &name)> get_name_fn;
 
 			virtual void add_command(int id, const execute_fn &execute, bool is_group = false,
 				const query_state_fn &query_state = query_state_fn(), const get_name_fn &get_name = get_name_fn()) = 0;

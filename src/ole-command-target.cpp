@@ -85,7 +85,7 @@ namespace wpl
 					{
 						if (c->get_name && c->get_name(item, _cache))
 						{
-							wcsncpy(command_text->rgwz, _cache.c_str(), command_text->cwBuf - 1);
+							wcsncpy(command_text->rgwz, _utf8_cache(_cache.c_str()), command_text->cwBuf - 1);
 							command_text->rgwz[command_text->cwBuf - 1] = L'\0';
 							command_text->cwActual = static_cast<ULONG>(_cache.size() + 1);
 						}

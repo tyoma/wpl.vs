@@ -111,7 +111,7 @@ namespace wpl
 		void frame::set_visible(bool value)
 		{	value ? _underlying->Show() : _underlying->Hide();	}
 
-		void frame::set_caption(const wstring &caption)
+		void frame::set_caption(const string &caption)
 		{	_underlying->SetProperty(VSFPROPID_Caption, CComVariant(caption.c_str()));	}
 
 		void frame::set_caption_icon(const gcontext::surface_type &)

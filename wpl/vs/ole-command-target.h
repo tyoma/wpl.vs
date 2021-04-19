@@ -5,6 +5,7 @@
 #include <docobj.h>
 #include <vector>
 #include <wpl/concepts.h>
+#include <wpl/win32/utf8.h>
 
 namespace wpl
 {
@@ -41,7 +42,8 @@ namespace wpl
 		private:
 			const GUID _group_id;
 			commands _commands;
-			std::wstring _cache;
+			std::string _cache;
+			wpl::win32::utf_converter _utf8_cache;
 		};
 	}
 }

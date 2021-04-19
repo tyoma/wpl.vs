@@ -11,6 +11,7 @@
 #include <samples/common/simple_queue.h>
 #include <stdexcept>
 #include <time.h>
+#include <wpl/controls/header_basic.h>
 #include <wpl/controls/listview_basic.h>
 #include <wpl/controls/listview_composite.h>
 #include <wpl/layout.h>
@@ -83,7 +84,7 @@ namespace
 
 		virtual void draw_subitem(wpl::gcontext &ctx, wpl::gcontext::rasterizer_ptr &rasterizer_,
 			const wpl::rect_r &box, index_type item, unsigned state, wpl::columns_model::index_type subitem,
-			const std::wstring &text) const
+			const std::string &text) const
 		{
 			if (subitem == 1)
 			{
@@ -166,14 +167,14 @@ private:
 	virtual void initialize(vs::factory &factory_) override
 	{
 		factory_.register_control("styleview", [] (const factory &f, const control_context &context) {
-			return apply_stylesheet(make_shared< wpl::controls::listview_composite<styleview> >(f, context), *context.stylesheet_);
+			return apply_stylesheet(make_shared< wpl::controls::listview_composite<styleview, controls::header_basic> >(f, context, "header"), *context.stylesheet_);
 		});
 
 		add_command(cmdidShowStyles, [this, &factory_] (unsigned) {
 			_active_pane = factory_.create_pane(GUID_NULL, 0);
 			auto &active_pane = _active_pane;
 
-			_active_pane->set_caption(L"VS Styles");
+			_active_pane->set_caption("VS Styles");
 
 			const auto root = make_shared<overlay>();
 				root->add(factory_.create_control<control>("background"));

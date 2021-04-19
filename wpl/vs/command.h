@@ -39,7 +39,7 @@ namespace micro_profiler
 		command(int id, bool is_group = false);
 
 		virtual bool query_state(const ContextT &context, unsigned item, unsigned &flags) const = 0;
-		virtual bool get_name(const ContextT &context, unsigned item, std::wstring &name) const;
+		virtual bool get_name(const ContextT &context, unsigned item, std::string &name) const;
 		virtual void exec(ContextT &context, unsigned item) = 0;
 
 	public:
@@ -61,7 +61,7 @@ namespace micro_profiler
 	{	}
 
 	template <typename ContextT>
-	inline bool command<ContextT>::get_name(const ContextT &/*context*/, unsigned /*item*/, std::wstring &/*name*/) const
+	inline bool command<ContextT>::get_name(const ContextT &/*context*/, unsigned /*item*/, std::string &/*name*/) const
 	{	return false;	}
 
 

@@ -47,7 +47,7 @@ namespace wpl
 			virtual rect_i get_location() const;
 			virtual void set_location(const rect_i &location);
 			virtual void set_visible(bool value);
-			virtual void set_caption(const std::wstring &caption);
+			virtual void set_caption(const std::string &caption);
 			virtual void set_caption_icon(const gcontext::surface_type &icon);
 			virtual void set_task_icon(const gcontext::surface_type &icon);
 			virtual std::shared_ptr<form> create_child();

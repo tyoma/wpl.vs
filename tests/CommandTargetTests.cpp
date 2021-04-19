@@ -404,14 +404,14 @@ namespace wpl
 					cmdtext->cwBuf = 20;
 
 					oct.add_command(10, [] (unsigned) { }, false, [] (unsigned, unsigned &) { return true; },
-						[] (unsigned, wstring &caption) { return caption = L"a short name", true; });
+						[] (unsigned, string &caption) { return caption = "a short name", true; });
 					oct.add_command(31, [] (unsigned) { }, true, [] (unsigned, unsigned &) { return true; },
-						[] (unsigned item, wstring &caption) -> bool {
+						[] (unsigned item, string &caption) -> bool {
 
 						if (item == 0)
-							caption = L"Lorem ipsum dolor sit amet, consectetur adipiscing elit";
+							caption = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
 						else if (item == 1)
-							caption = L"medium-sized strings are good for your health";
+							caption = "medium-sized strings are good for your health";
 						else
 							caption.clear();
 						return true;
@@ -464,12 +464,12 @@ namespace wpl
 					cmdtext->cmdtextf = OLECMDTEXTF_NAME;
 
 					oct.add_command(10, [] (unsigned) { }, false, [] (unsigned, unsigned &) { return true; },
-						[] (unsigned, wstring &caption) { return caption = L"a short name", true; });
+						[] (unsigned, string &caption) { return caption = "a short name", true; });
 					oct.add_command(31, [] (unsigned) { }, true, [] (unsigned, unsigned &) { return true; },
-						[] (unsigned item, wstring &caption) -> bool {
+						[] (unsigned item, string &caption) -> bool {
 
 						if (item == 0)
-							caption = L"Lorem ipsum dolor sit amet, consectetur adipiscing elit";
+							caption = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
 						else
 							caption.clear();
 						return true;
@@ -494,7 +494,7 @@ namespace wpl
 					OLECMD cmd[] = { { 31, }, { 10, }, };
 
 					oct.add_command(10, [] (unsigned) { }, false, [] (unsigned, unsigned &) { return true; },
-						[] (unsigned, wstring &) { return false; });
+						[] (unsigned, string &) { return false; });
 					oct.add_command(31, [] (unsigned) { }, true);
 
 					cmdtext->cmdtextf = OLECMDTEXTF_NAME;
