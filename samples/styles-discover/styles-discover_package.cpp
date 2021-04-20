@@ -82,10 +82,11 @@ namespace
 			_model = m;
 		}
 
-		virtual void draw_subitem(wpl::gcontext &ctx, wpl::gcontext::rasterizer_ptr &rasterizer_,
-			const wpl::rect_r &box, index_type item, unsigned state, wpl::columns_model::index_type subitem,
-			const std::string &text) const
+		virtual void draw_subitem(gcontext &ctx, gcontext::rasterizer_ptr &rasterizer_, const agge::rect_r &box,
+			unsigned layer, index_type item, unsigned state, columns_model::index_type subitem) const override
 		{
+			if (layer != 1u)
+				return;
 			if (subitem == 1)
 			{
 				if (_model)
@@ -99,7 +100,7 @@ namespace
 			}
 			else
 			{
-				controls::listview_basic::draw_subitem(ctx, rasterizer_, box, item, state, subitem, text);
+				controls::listview_basic::draw_subitem(ctx, rasterizer_, box, layer, item, state, subitem);
 			}
 		}
 
@@ -131,7 +132,7 @@ private:
 	virtual wpl::clock get_clock() const override
 	{	return [] {	return ::clock();	};	}
 
-	virtual wpl::queue initialize_queue() override
+	virtual queue initialize_queue() override
 	{
 		const auto q = make_shared<simple_queue>();
 		return [q] (const queue_task &task, timespan defer_by) {	return q->schedule(task, defer_by);	};
@@ -167,7 +168,7 @@ private:
 	virtual void initialize(vs::factory &factory_) override
 	{
 		factory_.register_control("styleview", [] (const factory &f, const control_context &context) {
-			return apply_stylesheet(make_shared< wpl::controls::listview_composite<styleview, controls::header_basic> >(f, context, "header"), *context.stylesheet_);
+			return apply_stylesheet(make_shared< controls::listview_composite<styleview, controls::header_basic> >(f, context, "header"), *context.stylesheet_);
 		});
 
 		add_command(cmdidShowStyles, [this, &factory_] (unsigned) {

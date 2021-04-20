@@ -12,13 +12,13 @@ class styles_columns_model : public wpl::headers_model
 	virtual void get_caption(index_type index, agge::richtext_t &caption) const override;
 };
 
-class styles_model : public wpl::string_table_model
+class styles_model : public wpl::richtext_table_model
 {
 public:
 	styles_model(const CComPtr<IVsUIShell2> &vsshell);
 
 	virtual index_type get_count() const throw() override;
-	virtual void get_text(index_type row, index_type column, std::string &text) const override;
+	virtual void get_text(index_type row, index_type column, agge::richtext_t &text) const override;
 	virtual void set_order(index_type column, bool ascending) override;
 
 	agge::color get_color(index_type row) const;

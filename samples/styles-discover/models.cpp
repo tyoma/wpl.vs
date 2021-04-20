@@ -43,14 +43,14 @@ styles_model::styles_model(const CComPtr<IVsUIShell2> &vsshell)
 styles_model::index_type styles_model::get_count() const throw()
 {	return 250u;	}
 
-void styles_model::get_text(index_type row, index_type column, string &text) const
+void styles_model::get_text(index_type row, index_type column, agge::richtext_t &text) const
 {
 	const long long color_index = 40 - (int)row;
 
 	switch (column)
 	{
 	case 0:
-		text = std::to_string(color_index);
+		text << std::to_string(color_index).c_str();
 		break;
 
 	case 2:
@@ -63,14 +63,14 @@ void styles_model::get_text(index_type row, index_type column, string &text) con
 
 			switch (column)
 			{
-			case 2:	text = std::to_string((long long)c.r); break;
-			case 3:	text = std::to_string((long long)c.g); break;
-			case 4:	text = std::to_string((long long)c.b); break;
+			case 2:	text << std::to_string((long long)c.r).c_str(); break;
+			case 3:	text << std::to_string((long long)c.g).c_str(); break;
+			case 4:	text << std::to_string((long long)c.b).c_str(); break;
 			}
 		}
 		else
 		{
-			text = "N/A";
+			text << "N/A";
 		}
 		break;
 	}
