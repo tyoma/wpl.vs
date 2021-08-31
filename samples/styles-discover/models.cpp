@@ -76,9 +76,6 @@ void styles_model::get_text(index_type row, index_type column, agge::richtext_t 
 	}
 }
 
-void styles_model::set_order(index_type /*column*/, bool /*ascending*/)
-{	}
-
 agge::color styles_model::get_color(index_type row) const
 {
 	DWORD clr;

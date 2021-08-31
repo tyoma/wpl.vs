@@ -19,7 +19,6 @@ public:
 
 	virtual index_type get_count() const throw() override;
 	virtual void get_text(index_type row, index_type column, agge::richtext_t &text) const override;
-	virtual void set_order(index_type column, bool ascending) override;
 
 	agge::color get_color(index_type row) const;
 
