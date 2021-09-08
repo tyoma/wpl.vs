@@ -44,19 +44,20 @@ namespace wpl
 		private:
 			virtual void set_root(std::shared_ptr<wpl::control> root);
 
-			virtual rect_i get_location() const;
-			virtual void set_location(const rect_i &location);
-			virtual void set_visible(bool value);
-			virtual void set_caption(const std::string &caption);
-			virtual void set_caption_icon(const gcontext::surface_type &icon);
-			virtual void set_task_icon(const gcontext::surface_type &icon);
-			virtual std::shared_ptr<form> create_child();
-			virtual void set_features(unsigned /*styles*/ features);
+			virtual rect_i get_location() const override;
+			virtual void set_location(const rect_i &location) override;
+			virtual void center_parent() override;
+			virtual void set_visible(bool value) override;
+			virtual void set_caption(const std::string &caption) override;
+			virtual void set_caption_icon(const gcontext::surface_type &icon) override;
+			virtual void set_task_icon(const gcontext::surface_type &icon) override;
+			virtual std::shared_ptr<form> create_child() override;
+			virtual void set_features(unsigned /*styles*/ features) override;
 
 			virtual void add_command(int id, const execute_fn &execute, bool is_group, const query_state_fn &query_state,
-				const get_name_fn &get_name);
+				const get_name_fn &get_name) override;
 
-			virtual void activate();
+			virtual void activate() override;
 
 		private:
 			const CComPtr<IVsWindowFrame> _underlying;

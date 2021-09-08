@@ -108,6 +108,9 @@ namespace wpl
 		void frame::set_location(const rect_i &)
 		{	throw 0;	}
 
+		void frame::center_parent()
+		{	throw 0;	}
+
 		void frame::set_visible(bool value)
 		{	value ? _underlying->Show() : _underlying->Hide();	}
 
