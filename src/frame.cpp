@@ -86,7 +86,7 @@ namespace wpl
 				CComPtr< CComObject<frame_events_listener> > listener(plistener);
 
 				listener->set_sink(*this);
-				_underlying2->Advise(listener, &_advise_cookie);
+				_underlying2->Advise(listener, reinterpret_cast<VSCOOKIE *>(&_advise_cookie));
 			}
 			LOG(PREAMBLE "constructed...") % A(this);
 		}
@@ -96,7 +96,7 @@ namespace wpl
 			LOG(PREAMBLE "destroying...") % A(this);
 			_underlying->CloseFrame(FRAMECLOSE_NoSave);
 			if (_underlying2)
-				_underlying2->Unadvise(_advise_cookie);
+				_underlying2->Unadvise(*reinterpret_cast<const VSCOOKIE *>(&_advise_cookie));
 		}
 
 		void frame::set_root(shared_ptr<wpl::control> root)

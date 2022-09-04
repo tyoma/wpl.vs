@@ -33,7 +33,7 @@
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories);fallback</AdditionalIncludeDirectories>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <ProjectReference>

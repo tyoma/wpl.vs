@@ -1,6 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
-
-include(test)
+cmake_minimum_required(VERSION 3.13)
 
 set(WPL_VS_TESTS_SOURCES
 	CommandTargetTests.cpp

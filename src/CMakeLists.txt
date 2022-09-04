@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.13)
 
 include(vssdk)
 
@@ -15,4 +15,5 @@ set(WPL_VS_SOURCES
 
 add_library(wpl.vs STATIC ${WPL_VS_SOURCES})
 
-target_link_libraries(wpl.vs common wpl agge agge.text)
+target_link_libraries(wpl.vs wpl)
+target_include_directories(wpl.vs PUBLIC .. PRIVATE fallback)
