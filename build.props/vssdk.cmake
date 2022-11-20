@@ -13,4 +13,4 @@ set(VSSDKINCLUDE ${VSSDKROOT}/Common/Inc)
 set(VSSDKBIN ${VSSDKROOT}/Tools/Bin)
 
 include_directories(${VSSDKINCLUDE})
-include_directories(${CMAKE_CURRENT_LIST_DIR}/../../compat/vssdk)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/../compat/vssdk)

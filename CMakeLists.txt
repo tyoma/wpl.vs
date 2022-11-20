@@ -8,13 +8,9 @@ cmake_policy(SET CMP0079 NEW)
 
 option(WPL_VS_NO_TESTS "Do not build test modules." OFF)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/make/build.props)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/build.props)
 
 include(unipath)
-
-if (NOT TARGET freetype)
-	add_subdirectory(libraries/freetype2)
-endif()
 
 if (NOT TARGET utfia)
 	set(UTFIA_NO_TESTS ON)
@@ -40,6 +36,9 @@ if (NOT WPL_VS_NO_TESTS)
 		add_subdirectory(libraries/utee)
 	endif()
 
+	add_subdirectory(libraries/wpl/samples/common/src)
+	add_subdirectory(samples/styles-discover)
+	
 	add_subdirectory(tests)
 	add_utee_test(wpl.vs.tests)
 endif()
